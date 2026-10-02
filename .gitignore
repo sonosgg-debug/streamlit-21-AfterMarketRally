@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.env/
+env/
+
+# Streamlit secrets (config.toml은 다크 테마 적용을 위해 git에 포함)
+.streamlit/secrets.toml
+!.streamlit/config.toml
+
+# Temp / Cache
+*.tmp
+*.log
