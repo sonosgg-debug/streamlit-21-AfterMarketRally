@@ -142,7 +142,6 @@ def get_market_session_info() -> dict:
 def fetch_universe_by_scope(
     market: str = "전체 (ALL)",
     scope: str = "시가총액 상위 200개",
-    exchange: str = "통합 (SOR/합산)",
     **kwargs
 ) -> list:
     """
@@ -198,20 +197,19 @@ def fetch_universe_by_scope(
             except Exception:
                 pass
 
-    # NXT 선택 시: 800개 유동성 대표주에 맞춰 상위 종목 유지
     return universe
 
 
 # ---------------------------------------------------------
-# 3. 고속 배치 시세 수집기 (시간외 체결가, 정규장/시간외 거래량)
+# 3. 네이버 증권 & 다음 금융 상호보완적 시세 수집기
 # ---------------------------------------------------------
 
-def _fetch_batch_chunk(code_chunk: list, exchange_mode: str = "통합 (SOR/합산)") -> list:
+def _fetch_naver_batch(code_chunk: list) -> dict:
     """
-    20~30개 종목을 쉼표로 연결하여 1회의 요청으로 일괄 수집합니다.
+    네이버 증권 실시간 폴링 API: KRX 누적 거래량(C), NXT 누적 거래량(D) 고속 배치 수집
     """
     if not code_chunk:
-        return []
+        return {}
 
     codes_str = ",".join(code_chunk)
     url = f"https://polling.finance.naver.com/api/realtime/domestic/stock/{codes_str}"
@@ -220,7 +218,7 @@ def _fetch_batch_chunk(code_chunk: list, exchange_mode: str = "통합 (SOR/합�
         "Referer": "https://m.stock.naver.com/"
     }
 
-    records = []
+    result = {}
     try:
         r = requests.get(url, headers=headers, timeout=5.0)
         if r.status_code == 200:
@@ -233,117 +231,71 @@ def _fetch_batch_chunk(code_chunk: list, exchange_mode: str = "통합 (SOR/합�
                 name = item.get("stockName", "")
                 market = "KOSPI" if item.get("stockExchangeType", {}).get("code") == "KS" else "KOSDAQ"
 
-                # 정규장 종가 (A)
-                close_price = int(item.get("closePriceRaw", 0) or 0)
-                # 정규장 등락률 (%)
-                try:
-                    change_rate = float(item.get("fluctuationsRatioRaw", 0) or 0.0)
-                except (ValueError, TypeError):
-                    change_rate = 0.0
+                # KRX 누적 거래량 (C)
+                c_vol = int(item.get("accumulatedTradingVolumeRaw", 0) or 0)
 
-                # 정규장 거래량 (C)
-                regular_vol = int(item.get("accumulatedTradingVolumeRaw", 0) or 0)
-
-                # 시간외 데이터
+                # NXT 누적 거래량 (D)
                 over_info = item.get("overMarketPriceInfo", {}) or {}
-                integ_info = item.get("integratedPriceInfo", {}) or {}
+                d_vol = int(over_info.get("accumulatedTradingVolumeRaw", 0) or 0)
 
-                # 시간외 가격 (B)
-                over_price_raw = over_info.get("overPrice")
-                if over_price_raw:
-                    try:
-                        over_price = int(str(over_price_raw).replace(",", ""))
-                    except (ValueError, TypeError):
-                        over_price = close_price
-                else:
-                    over_price = close_price
+                # 네이버 종가 (Fallback용)
+                naver_close = int(item.get("closePriceRaw", 0) or 0)
 
-                # 시간외 등락률 (%) 공식: {(B - A) / A * 100} 적용 (정규장 종가 대비 등락률)
-                if close_price > 0:
-                    over_change_rate = round(((over_price - close_price) / close_price) * 100, 2)
-                else:
-                    over_change_rate = 0.0
-
-                # 시간외 거래량 (D)
-                over_vol_raw = over_info.get("accumulatedTradingVolumeRaw", 0)
-                try:
-                    over_vol = int(over_vol_raw or 0)
-                except (ValueError, TypeError):
-                    over_vol = 0
-
-                # 통합 거래량 (KRX + NXT)
-                integ_vol_raw = integ_info.get("accumulatedTradingVolumeRaw", 0)
-                try:
-                    integ_vol = int(integ_vol_raw or 0)
-                except (ValueError, TypeError):
-                    integ_vol = regular_vol + over_vol
-
-                # 거래소별 데이터 분기 및 태깅
-                if exchange_mode == "한국거래소 (KRX)":
-                    exchange_tag = "KRX"
-                    final_over_vol = over_vol
-                elif exchange_mode == "대체거래소 (NXT)":
-                    exchange_tag = "NXT"
-                    nxt_diff = max(0, integ_vol - (regular_vol + over_vol))
-                    final_over_vol = nxt_diff if nxt_diff > 0 else int(over_vol * 0.40)
-                else:  # 통합 (SOR/합산)
-                    exchange_tag = "통합(ALL)"
-                    final_over_vol = max(over_vol, integ_vol - regular_vol) if integ_vol > regular_vol else over_vol
-
-                # 시간외 거래량 비율 (D/C, %)
-                if regular_vol > 0:
-                    vol_ratio = round((final_over_vol / regular_vol) * 100, 2)
-                else:
-                    vol_ratio = 0.0
-
-                # 시간외 거래대금 (원)
+                # 시간외 거래대금
                 over_val_raw = over_info.get("accumulatedTradingValueRaw")
-                if over_val_raw:
-                    try:
-                        over_val = int(over_val_raw)
-                    except (ValueError, TypeError):
-                        over_val = final_over_vol * over_price
-                else:
-                    over_val = final_over_vol * over_price
+                try:
+                    over_val = int(over_val_raw or 0)
+                except (ValueError, TypeError):
+                    over_val = 0
 
-                # 진성 수급 조건 (가짜 랠리 방지: 거래량 비율 2% 이상 AND 시간외 대금 5천만원 이상)
-                is_real_rally = (vol_ratio >= 2.0 and over_val >= 50_000_000)
-
-                records.append({
-                    "종목명": name,
-                    "종목코드": code,
-                    "시장": market,
-                    "거래소": exchange_tag,
-                    "정규장 종가(A)": close_price,
-                    "정규장 등락(%)": change_rate,
-                    "시간외 가격(B)": over_price,
-                    "시간외 등락(%)": over_change_rate,
-                    "정규장 거래량(C)": regular_vol,
-                    "시간외 거래량(D)": final_over_vol,
-                    "시간외 거래량 비율(D/C, %)": vol_ratio,
-                    "시간외 거래대금": over_val,
-                    "진성수급": is_real_rally
-                })
+                result[code] = {
+                    "name": name,
+                    "market": market,
+                    "krx_vol": c_vol,
+                    "nxt_vol": d_vol,
+                    "naver_close": naver_close,
+                    "over_val": over_val
+                }
     except Exception:
         pass
 
-    return records
+    return result
+
+
+def _fetch_daum_quote(code: str) -> tuple:
+    """
+    다음(Daum) 금융 API: KRX 정규장 공식 종가(regularTradePrice) 및 시간외 현재가(tradePrice) 정밀 수집
+    """
+    url = f"https://finance.daum.net/api/quotes/A{code}?summary=false&changeOverMarket=true"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0",
+        "Referer": "https://finance.daum.net/"
+    }
+    try:
+        r = requests.get(url, headers=headers, timeout=4.0)
+        if r.status_code == 200:
+            d = r.json()
+            reg_price = d.get("regularTradePrice")
+            trade_price = d.get("tradePrice")
+            return code, reg_price, trade_price
+    except Exception:
+        pass
+    return code, None, None
 
 
 def get_screener_data(
-    exchange: str = "통합 (SOR/합산)",
     market: str = "전체 (ALL)",
     scope: str = "시가총액 상위 200개",
     min_market_cap: int = 1000,
-    min_vol_ratio: float = 0.0,
+    min_nxt_ratio: float = 0.0,
     min_over_val: int = 0,
     **kwargs
 ) -> pd.DataFrame:
     """
-    지정된 조건으로 종목 유니버스를 확보하고 애프터마켓 시세를 병렬 수집 및 필터링합니다.
+    지정된 조건으로 종목 유니버스를 확보하고 네이버 증권 및 다음 금융의 데이터를 상호 보완하여 수집 및 분석합니다.
     """
     # 1. 유니버스 확보
-    universe = fetch_universe_by_scope(market=market, scope=scope, exchange=exchange)
+    universe = fetch_universe_by_scope(market=market, scope=scope)
     if not universe:
         return pd.DataFrame()
 
@@ -358,33 +310,88 @@ def get_screener_data(
     codes = u_df["Code"].tolist()
     cap_map = dict(zip(u_df["Code"], u_df["MarketCap"]))
 
-    # 2. 배치 시세 병렬 수집 (25개 단위 묶음)
+    # 2. 네이버 배치 시세 병렬 수집 (거래량 C, D 확보)
     chunk_size = 25
     chunks = [codes[i:i + chunk_size] for i in range(0, len(codes), chunk_size)]
 
-    all_records = []
+    naver_data = {}
     with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(_fetch_batch_chunk, chunk, exchange) for chunk in chunks]
+        futures = [executor.submit(_fetch_naver_batch, chunk) for chunk in chunks]
         for f in futures:
             res = f.result()
             if res:
-                all_records.extend(res)
+                naver_data.update(res)
 
-    if not all_records:
+    # 3. 다음 금융 병렬 수집 (KRX 정규장 종가 & 시간외 가격 확보)
+    daum_data = {}
+    with ThreadPoolExecutor(max_workers=16) as executor:
+        daum_results = list(executor.map(_fetch_daum_quote, codes))
+        for code, reg_p, trade_p in daum_results:
+            daum_data[code] = (reg_p, trade_p)
+
+    # 4. 데이터 통합 및 상호 보완 가공
+    records = []
+    for code in codes:
+        n_info = naver_data.get(code, {})
+        d_info = daum_data.get(code, (None, None))
+
+        name = n_info.get("name", "")
+        mkt = n_info.get("market", "")
+        cap = cap_map.get(code, 0)
+        c_vol = n_info.get("krx_vol", 0)
+        d_vol = n_info.get("nxt_vol", 0)
+        naver_close = n_info.get("naver_close", 0)
+        over_val = n_info.get("over_val", 0)
+
+        # 다음 금융에서 정규장 종가와 시간외 가격 추출 (부재 시 네이버 Fallback)
+        daum_reg, daum_trade = d_info
+        reg_price = int(daum_reg) if daum_reg else naver_close
+        over_price = int(daum_trade) if daum_trade else naver_close
+
+        # 시간외 등락률(%) = {(시간외 가격 - 정규장 종가) / 정규장 종가} * 100
+        if reg_price > 0 and over_price > 0:
+            over_change_rate = round(((over_price - reg_price) / reg_price) * 100, 2)
+        else:
+            over_change_rate = 0.0
+
+        # NXT 비중(%) = {D / (C + D)} * 100
+        total_vol = c_vol + d_vol
+        nxt_ratio = round((d_vol / total_vol) * 100, 2) if total_vol > 0 else 0.0
+
+        # 시간외 거래대금 보정
+        if over_val == 0 and d_vol > 0 and over_price > 0:
+            over_val = d_vol * over_price
+
+        # 진성 수급 조건 (NXT 비중 10% 이상 & 시간외 거래대금 5천만원 이상)
+        is_real_rally = (nxt_ratio >= 10.0 and over_val >= 50_000_000)
+
+        records.append({
+            "종목명": name,
+            "종목코드": code,
+            "시장": mkt,
+            "시가총액(억)": cap,
+            "시가총액": f"{cap:,}억" if cap > 0 else "-",
+            "KRX 정규장 종가": reg_price,
+            "KRX 시간외 가격": over_price,
+            "시간외 등락률(%)": over_change_rate,
+            "KRX 거래량": c_vol,
+            "NXT 거래량": d_vol,
+            "NXT 비중(%)": nxt_ratio,
+            "시간외 거래대금": over_val,
+            "진성수급": is_real_rally
+        })
+
+    if not records:
         return pd.DataFrame()
 
-    df = pd.DataFrame(all_records)
+    df = pd.DataFrame(records)
 
-    # 시가총액 매핑 및 포맷
-    df["시가총액(억)"] = df["종목코드"].map(lambda c: cap_map.get(c, 0))
-    df["시가총액"] = df["시가총액(억)"].apply(lambda v: f"{v:,}억" if v > 0 else "-")
-
-    # 3. 추가 수급 필터링
-    if min_vol_ratio > 0:
-        df = df[df["시간외 거래량 비율(D/C, %)"] >= min_vol_ratio]
+    # 5. 추가 수급 필터링
+    if min_nxt_ratio > 0:
+        df = df[df["NXT 비중(%)"] >= min_nxt_ratio]
     if min_over_val > 0:
         df = df[df["시간외 거래대금"] >= (min_over_val * 100_000_000)]
 
     # 기본 정렬: 시간외 등락률(%) 내림차순
-    df = df.sort_values(by="시간외 등락(%)", ascending=False).reset_index(drop=True)
+    df = df.sort_values(by="시간외 등락률(%)", ascending=False).reset_index(drop=True)
     return df

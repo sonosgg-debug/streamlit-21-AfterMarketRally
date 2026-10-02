@@ -28,7 +28,7 @@ importlib.reload(data_loader)
 importlib.reload(excel_exporter)
 
 from config import (
-    KST, EXCHANGES, DEFAULT_EXCHANGE, MARKETS, DEFAULT_MARKET,
+    KST, MARKETS, DEFAULT_MARKET,
     SCOPES, DEFAULT_SCOPE, MIN_MARKET_CAP_OPTIONS, DEFAULT_MIN_MARKET_CAP,
     EXCEL_HEADERS, THEME
 )
@@ -163,17 +163,21 @@ with st.sidebar:
         unsafe_allow_html=True
     )
 
-    # [2단계] 거래소 선택 (기본값: 통합(SOR/합산))
-    st.markdown("<div style='font-size: 0.95rem; font-weight: 700; color: #e2e8f0; margin-bottom: 6px;'>🏛️ 거래소 선택</div>", unsafe_allow_html=True)
-    sel_exchange = st.radio(
-        "거래소 선택",
-        EXCHANGES,
-        index=0,  # 기본값: "통합 (SOR/합산)"
-        horizontal=True,
-        label_visibility="collapsed"
+    # [2단계] 데이터 기준 안내 카드 (거래소 선택 대체)
+    st.markdown(
+        """
+        <div style='background-color: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px 12px; margin-bottom: 16px;'>
+            <div style='font-size: 0.78rem; color: #94a3b8; font-weight: 500;'>데이터 수집 체계</div>
+            <div style='font-size: 0.88rem; font-weight: 700; color: #38bdf8; margin-top: 2px;'>
+                🏛️ KRX & NXT 상호보완 분석
+            </div>
+            <div style='font-size: 0.75rem; color: #64748b; margin-top: 4px; line-height: 1.3;'>
+                다음(Daum) 금융과 네이버 증권의 실시간 데이터를 정합하여 산출합니다.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
-
-    st.markdown("<hr style='border: 0; height: 1px; background-color: #334155; margin: 16px 0;'>", unsafe_allow_html=True)
 
     # [3단계] 시장 선택
     st.markdown("<div style='font-size: 0.95rem; font-weight: 700; color: #e2e8f0; margin-bottom: 6px;'>🏢 시장 선택</div>", unsafe_allow_html=True)
@@ -210,14 +214,14 @@ with st.sidebar:
 
     # [6단계] 보조 수급 필터링 (Expander)
     with st.expander("🛠️ 스마트 수급 필터 설정", expanded=False):
-        sel_min_vol_ratio = st.slider(
-            "최소 시간외 거래량 비율 (D/C, %)",
+        sel_min_nxt_ratio = st.slider(
+            "최소 NXT 비중 (%)",
             min_value=0.0,
-            max_value=10.0,
+            max_value=80.0,
             value=0.0,
-            step=0.5,
+            step=5.0,
             format="%.1f%%",
-            help="정규장 거래량(C) 대비 시간외 거래량(D)의 최소 비율입니다."
+            help="전체 거래량(KRX+NXT) 대비 대체거래소(NXT) 거래량의 최소 비중입니다."
         )
         sel_min_val = st.slider(
             "최소 시간외 거래대금 (억 원)",
@@ -228,7 +232,7 @@ with st.sidebar:
             format="%d억",
             help="소량(10~100주) 허수 매매를 차단하기 위한 거래대금 기준입니다."
         )
-        only_real_rally = st.checkbox("🔥 진성 수급주만 보기 (D/C ≥ 2% & 대금 5천만+)", value=True)
+        only_real_rally = st.checkbox("🔥 NXT 활성 거래주만 보기 (NXT 비중 ≥ 10% & 대금 5천만+)", value=True)
 
     # [7단계] 하단 액션 버튼 (가이드 02 Type A 표준: 2열 가로 배치)
     st.markdown("<hr style='border: 0; height: 1px; background-color: #334155; margin: 20px 0 16px 0;'>", unsafe_allow_html=True)
@@ -284,23 +288,22 @@ st.markdown(
 # 5. 데이터 수집 및 캐싱 (가이드 04-2, 05-4 준수)
 # ==============================================================================
 @st.cache_data(ttl=60, show_spinner=False)
-def load_cached_screener(exchange, market, scope, min_cap, min_v_ratio, min_val, only_real):
+def load_cached_screener(market, scope, min_cap, min_nxt_r, min_val, only_real):
     df = get_screener_data(
-        exchange=exchange,
         market=market,
         scope=scope,
         min_market_cap=min_cap,
-        min_vol_ratio=min_v_ratio,
+        min_nxt_ratio=min_nxt_r,
         min_over_val=min_val
     )
     if only_real and not df.empty and "진성수급" in df.columns:
         df = df[df["진성수급"] == True]
     return df
 
-with st.spinner("애프터마켓 실시간 체결 데이터를 고속 수집 및 분석 중입니다..."):
+with st.spinner("KRX 및 NXT 실시간 체결 데이터를 상호 보완 수집 및 분석 중입니다..."):
     df_raw = load_cached_screener(
-        sel_exchange, sel_market, sel_scope,
-        sel_min_market_cap, sel_min_vol_ratio, sel_min_val, only_real_rally
+        sel_market, sel_scope,
+        sel_min_market_cap, sel_min_nxt_ratio, sel_min_val, only_real_rally
     )
 
 if df_raw.empty:
@@ -311,8 +314,8 @@ if df_raw.empty:
 # 6. 상단 핵심 KPI 요약 메트릭 카드 4종
 # ==============================================================================
 total_count = len(df_raw)
-top_gain_row = df_raw.sort_values(by="시간외 등락(%)", ascending=False).iloc[0]
-top_vol_row = df_raw.sort_values(by="시간외 거래량 비율(D/C, %)", ascending=False).iloc[0]
+top_gain_row = df_raw.sort_values(by="시간외 등락률(%)", ascending=False).iloc[0]
+top_vol_row = df_raw.sort_values(by="NXT 비중(%)", ascending=False).iloc[0]
 top_val_row = df_raw.sort_values(by="시간외 거래대금", ascending=False).iloc[0]
 
 mc1, mc2, mc3, mc4 = st.columns(4)
@@ -322,19 +325,19 @@ with mc1:
         <div class='metric-card'>
             <div class='metric-title'>🎯 스크리닝 포착 종목</div>
             <div class='metric-value'>{total_count:,} <span style='font-size: 0.9rem; font-weight: normal; color: #94a3b8;'>개</span></div>
-            <div class='metric-sub' style='color: #38bdf8;'>거래소: {sel_exchange.split()[0]} | {sel_market.split()[0]}</div>
+            <div class='metric-sub' style='color: #38bdf8;'>KRX & NXT 상호보완 | {sel_market.split()[0]}</div>
         </div>
         """,
         unsafe_allow_html=True
     )
 with mc2:
-    gain_color = THEME["up_red"] if top_gain_row["시간외 등락(%)"] > 0 else THEME["down_blue"]
+    gain_color = THEME["up_red"] if top_gain_row["시간외 등락률(%)"] > 0 else THEME["down_blue"]
     st.markdown(
         f"""
         <div class='metric-card'>
             <div class='metric-title'>🚀 시간외 최대 급등 종목</div>
             <div class='metric-value' style='color: {gain_color};'>{top_gain_row["종목명"]}</div>
-            <div class='metric-sub' style='color: {gain_color};'>등락률: +{top_gain_row["시간외 등락(%)"]:.2f}% ({top_gain_row["시간외 가격(B)"]:,}원)</div>
+            <div class='metric-sub' style='color: {gain_color};'>등락률: +{top_gain_row["시간외 등락률(%)"]:.2f}% ({top_gain_row["KRX 시간외 가격"]:,}원)</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -343,9 +346,9 @@ with mc3:
     st.markdown(
         f"""
         <div class='metric-card'>
-            <div class='metric-title'>⚡ 시간외 거래량 비율 1위</div>
+            <div class='metric-title'>⚡ NXT 거래 비중 1위</div>
             <div class='metric-value' style='color: #facc15;'>{top_vol_row["종목명"]}</div>
-            <div class='metric-sub' style='color: #facc15;'>정규장 대비 비중: {top_vol_row["시간외 거래량 비율(D/C, %)"]:.2f}%</div>
+            <div class='metric-sub' style='color: #facc15;'>NXT 비중: {top_vol_row["NXT 비중(%)"]:.2f}% (NXT {top_vol_row["NXT 거래량"]:,}주)</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -357,7 +360,7 @@ with mc4:
         <div class='metric-card'>
             <div class='metric-title'>💰 시간외 거래대금 1위</div>
             <div class='metric-value'>{top_val_row["종목명"]}</div>
-            <div class='metric-sub' style='color: #a855f7;'>거래대금: {val_eok:,}억 원 ({top_val_row["시간외 거래량(D)"]:,}주)</div>
+            <div class='metric-sub' style='color: #a855f7;'>거래대금: {val_eok:,}억 원 (NXT {top_val_row["NXT 거래량"]:,}주)</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -377,11 +380,11 @@ st.markdown(
 
 fig = px.scatter(
     df_raw.head(80),
-    x="시간외 등락(%)",
-    y="시간외 거래량 비율(D/C, %)",
+    x="시간외 등락률(%)",
+    y="NXT 비중(%)",
     size="시간외 거래대금",
-    color="시간외 등락(%)",
-    custom_data=["종목명", "정규장 종가(A)", "시간외 가격(B)", "시간외 등락(%)", "시간외 거래량 비율(D/C, %)"],
+    color="시간외 등락률(%)",
+    custom_data=["종목명", "KRX 정규장 종가", "KRX 시간외 가격", "시간외 등락률(%)", "KRX 거래량", "NXT 거래량", "NXT 비중(%)"],
     color_continuous_scale=["#3b82f6", "#94a3b8", "#f87171"],
     size_max=35,
     template="plotly_dark"
@@ -390,10 +393,12 @@ fig = px.scatter(
 fig.update_traces(
     hovertemplate=(
         "<b>%{customdata[0]}</b><br>"
-        "정규장 종가(A): %{customdata[1]:,}원<br>"
-        "시간외 가격(B): %{customdata[2]:,}원<br>"
-        "시간외 등락(%): %{customdata[3]:+.2f}%<br>"
-        "시간외 거래량 비율(D/C, %): %{customdata[4]:.2f}%"
+        "KRX 정규장 종가: %{customdata[1]:,}원<br>"
+        "KRX 시간외 가격: %{customdata[2]:,}원<br>"
+        "시간외 등락률: %{customdata[3]:+.2f}%<br>"
+        "KRX 거래량: %{customdata[4]:,}주<br>"
+        "NXT 거래량: %{customdata[5]:,}주<br>"
+        "NXT 비중: %{customdata[6]:.2f}%"
         "<extra></extra>"
     )
 )
@@ -412,7 +417,7 @@ fig.update_layout(
         zerolinewidth=1.5
     ),
     yaxis=dict(
-        title="시간외 거래량 비율 (D/C, %)",
+        title="NXT 거래 비중 (%)",
         gridcolor="#334155",
         zerolinecolor="#64748b",
         zerolinewidth=1.5
@@ -446,11 +451,12 @@ with col_sort1:
     sort_column = st.selectbox(
         "정렬 기준 컬럼",
         [
-            "시간외 등락(%)",
-            "시간외 거래량 비율(D/C, %)",
-            "정규장 등락(%)",
-            "정규장 거래량(C)",
-            "시간외 거래량(D)",
+            "시간외 등락률(%)",
+            "NXT 비중(%)",
+            "KRX 정규장 종가",
+            "KRX 시간외 가격",
+            "KRX 거래량",
+            "NXT 거래량",
             "시간외 거래대금"
         ],
         index=0
@@ -479,7 +485,7 @@ df_display = df_display.sort_values(by=sort_column, ascending=ascending).reset_i
 # 엑셀 데이터 생성
 excel_data = export_to_excel_bytes(df_display)
 now_file_str = datetime.now(KST).strftime("%Y%m%d_%H%M")
-excel_filename = f"AfterMarket_Rally_{sel_exchange.split()[0]}_{now_file_str}.xlsx"
+excel_filename = f"AfterMarket_Rally_{now_file_str}.xlsx"
 
 # 섹터 제목 및 다운로드 버튼 렌더링 (다운로드 버튼을 섹터 제목 오른쪽 끝에 배치)
 with header_container:
@@ -512,18 +518,16 @@ st.dataframe(
     use_container_width=True,
     height=480,
     column_config={
-        "종목명": st.column_config.TextColumn("종목명", width="medium"),
-        "종목코드": st.column_config.TextColumn("종목코드", width="small"),
-        "시장": st.column_config.TextColumn("시장", width="small"),
-        "거래소": st.column_config.TextColumn("거래소", width="small"),
-        "시가총액": st.column_config.TextColumn("시가총액", width="medium", alignment="right"),
-        "정규장 종가(A)": st.column_config.NumberColumn("정규장 종가(A)", format="%d원"),
-        "정규장 등락(%)": st.column_config.NumberColumn("정규장 등락(%)", format="%.2f%%"),
-        "시간외 가격(B)": st.column_config.NumberColumn("시간외 가격(B)", format="%d원"),
-        "시간외 등락(%)": st.column_config.NumberColumn("시간외 등락(%)", format="%.2f%%"),
-        "정규장 거래량(C)": st.column_config.NumberColumn("정규장 거래량(C)", format="%d주"),
-        "시간외 거래량(D)": st.column_config.NumberColumn("시간외 거래량(D)", format="%d주"),
-        "시간외 거래량 비율(D/C, %)": st.column_config.NumberColumn("시간외 거래량 비율(D/C, %)", format="%.2f%%")
+        "종목명": st.column_config.TextColumn("종목명"),
+        "종목코드": st.column_config.TextColumn("종목코드"),
+        "시장": st.column_config.TextColumn("시장"),
+        "시가총액": st.column_config.TextColumn("시가총액", alignment="right"),
+        "KRX 정규장 종가": st.column_config.NumberColumn("KRX 정규장 종가", format="%d원"),
+        "KRX 시간외 가격": st.column_config.NumberColumn("KRX 시간외 가격", format="%d원"),
+        "시간외 등락률(%)": st.column_config.NumberColumn("시간외 등락률(%)", format="%.2f%%"),
+        "KRX 거래량": st.column_config.NumberColumn("KRX 거래량", format="%d주"),
+        "NXT 거래량": st.column_config.NumberColumn("NXT 거래량", format="%d주"),
+        "NXT 비중(%)": st.column_config.NumberColumn("NXT 비중(%)", format="%.2f%%")
     },
     hide_index=True
 )

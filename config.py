@@ -8,14 +8,7 @@ from datetime import timezone, timedelta
 # 1. 타임존 설정 (KST = UTC+9) - 가이드 04 준수
 KST = timezone(timedelta(hours=9))
 
-# 2. 거래소 및 시장 정의
-EXCHANGES = [
-    "통합 (SOR/합산)",
-    "한국거래소 (KRX)",
-    "대체거래소 (NXT)"
-]
-DEFAULT_EXCHANGE = "통합 (SOR/합산)"
-
+# 2. 시장 정의
 MARKETS = [
     "전체 (ALL)",
     "코스피 (KOSPI)",
@@ -41,15 +34,13 @@ EXCEL_HEADERS = [
     "종목명",
     "종목코드",
     "시장",
-    "거래소",
     "시가총액",
-    "정규장 종가(A)",
-    "정규장 등락(%)",
-    "시간외 가격(B)",
-    "시간외 등락(%)",
-    "정규장 거래량(C)",
-    "시간외 거래량(D)",
-    "시간외 거래량 비율(D/C, %)"
+    "KRX 정규장 종가",
+    "KRX 시간외 가격",
+    "시간외 등락률(%)",
+    "KRX 거래량",
+    "NXT 거래량",
+    "NXT 비중(%)"
 ]
 
 # 6. KRX 법정 공휴일 캘린더 (2025~2027) - 가이드 04 준수

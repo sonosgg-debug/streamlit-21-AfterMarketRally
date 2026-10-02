@@ -27,10 +27,6 @@ def export_to_excel_bytes(df: pd.DataFrame) -> bytes:
 
     # 1. 헤더 컬럼 목록 확정
     export_columns = [col for col in EXCEL_HEADERS if col in df.columns]
-    if "거래소" not in export_columns and "거래소" in df.columns:
-        # 4번째 위치에 거래소 삽입
-        export_columns.insert(3, "거래소")
-
     ws.append(export_columns)
 
     # 2. 스타일 정의
@@ -76,15 +72,15 @@ def export_to_excel_bytes(df: pd.DataFrame) -> bytes:
             if col_name in ["종목명"]:
                 cell.alignment = Alignment(horizontal="left", vertical="center")
                 cell.font = Font(name="Malgun Gothic", size=10, bold=True)
-            elif col_name in ["종목코드", "시장", "거래소"]:
+            elif col_name in ["종목코드", "시장"]:
                 cell.alignment = Alignment(horizontal="center", vertical="center")
                 cell.number_format = "@"
             elif col_name in ["시가총액"]:
                 cell.alignment = Alignment(horizontal="right", vertical="center")
-            elif col_name in ["정규장 종가(A)", "시간외 가격(B)", "정규장 거래량(C)", "시간외 거래량(D)"]:
+            elif col_name in ["KRX 정규장 종가", "KRX 시간외 가격", "KRX 거래량", "NXT 거래량"]:
                 cell.alignment = Alignment(horizontal="right", vertical="center")
                 cell.number_format = "#,##0"
-            elif col_name in ["정규장 등락(%)", "시간외 등락(%)"]:
+            elif col_name in ["시간외 등락률(%)"]:
                 cell.alignment = Alignment(horizontal="right", vertical="center")
                 try:
                     num_val = float(cell.value)
@@ -99,11 +95,11 @@ def export_to_excel_bytes(df: pd.DataFrame) -> bytes:
                         cell.number_format = '0.00"%"'
                 except (ValueError, TypeError):
                     pass
-            elif col_name in ["시간외 거래량 비율(D/C, %)"]:
+            elif col_name in ["NXT 비중(%)"]:
                 cell.alignment = Alignment(horizontal="right", vertical="center")
                 try:
                     num_val = float(cell.value)
-                    if num_val >= 3.0:
+                    if num_val >= 20.0:
                         cell.font = red_font
                     cell.number_format = '0.00"%"'
                 except (ValueError, TypeError):
