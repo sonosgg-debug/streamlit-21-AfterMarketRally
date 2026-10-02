@@ -435,14 +435,8 @@ st.plotly_chart(fig, use_container_width=True)
 # ==============================================================================
 # 8. 엑셀 형식 데이터 테이블 (가이드 01-6 및 오름차순/내림차순 토글 구현)
 # ==============================================================================
-st.markdown(
-    """
-    <div style='font-size: 1.20rem; font-weight: 700; color: #8AB4F8; margin: 24px 0 10px 0; display: flex; align-items: center; gap: 8px;'>
-        <span>📊</span> 애프터마켓 스크리닝 데이터 (Excel Spreadsheet View)
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# 섹터 제목 및 다운로드 버튼 컨테이너 (위치 선점)
+header_container = st.container()
 
 # 정렬 컨트롤러 바 (웹 상에서 빠른 토글 정렬 지원)
 col_sort1, col_sort2, col_filter, col_spacer = st.columns([2, 1.5, 2.5, 2])
@@ -480,6 +474,33 @@ if search_keyword:
 ascending = (sort_order == "오름차순 (▲)")
 df_display = df_display.sort_values(by=sort_column, ascending=ascending).reset_index(drop=True)
 
+# 엑셀 데이터 생성
+excel_data = export_to_excel_bytes(df_display)
+now_file_str = datetime.now(KST).strftime("%Y%m%d_%H%M")
+excel_filename = f"AfterMarket_Rally_{sel_exchange.split()[0]}_{now_file_str}.xlsx"
+
+# 섹터 제목 및 다운로드 버튼 렌더링 (다운로드 버튼을 섹터 제목 오른쪽 끝에 배치)
+with header_container:
+    col_title, col_dl = st.columns([5.5, 1.5])
+    with col_title:
+        st.markdown(
+            """
+            <div style='font-size: 1.20rem; font-weight: 700; color: #8AB4F8; height: 42px; display: flex; align-items: center; gap: 8px;'>
+                <span>📊</span> 애프터마켓 스크리닝 데이터 (Excel Spreadsheet View)
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    with col_dl:
+        st.download_button(
+            label="📥 엑셀 파일 다운로드",
+            data=excel_data,
+            file_name=excel_filename,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+            help="1행 헤더에 오름차순/내림차순 토글 AutoFilter가 적용된 엑셀 파일입니다."
+        )
+
 # 엑셀 헤더 규격에 맞춘 컬럼 정렬
 display_cols = [c for c in EXCEL_HEADERS if c in df_display.columns]
 
@@ -504,27 +525,6 @@ st.dataframe(
     },
     hide_index=True
 )
-
-# ==============================================================================
-# 9. 엑셀 파일 다운로드 버튼 (가이드 01-4-(3) 표준 규격 준수)
-# ==============================================================================
-excel_data = export_to_excel_bytes(df_display)
-now_file_str = datetime.now(KST).strftime("%Y%m%d_%H%M")
-excel_filename = f"AfterMarket_Rally_{sel_exchange.split()[0]}_{now_file_str}.xlsx"
-
-st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-col_dl1, col_dl2 = st.columns([1, 3])
-with col_dl1:
-    st.download_button(
-        label="📥 엑셀 파일 다운로드",
-        data=excel_data,
-        file_name=excel_filename,
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        use_container_width=True,
-        help="1행 헤더에 오름차순/내림차순 토글 AutoFilter가 적용된 엑셀 파일입니다."
-    )
-with col_dl2:
-    st.caption("💡 다운로드받은 엑셀(.xlsx) 파일은 1행 헤더에 **AutoFilter 토글 역삼각형(▼)**이 기본 적용되어 있어, 엑셀에서도 각 컬럼별 정렬 및 필터링을 즉시 사용하실 수 있습니다.")
 
 # ==============================================================================
 # 10. 하단 표준 법적 고지 (가이드 01-5-(2) 표준 준수)
