@@ -381,19 +381,21 @@ fig = px.scatter(
     y="시간외 거래량 비율(D/C, %)",
     size="시간외 거래대금",
     color="시간외 등락(%)",
-    hover_name="종목명",
-    hover_data={
-        "종목코드": True,
-        "시장": True,
-        "정규장 종가(A)": ":,",
-        "시간외 가격(B)": ":,",
-        "시간외 등락(%)": ":.2f%",
-        "시간외 거래량 비율(D/C, %)": ":.2f%",
-        "시가총액": True
-    },
+    custom_data=["종목명", "정규장 종가(A)", "시간외 가격(B)", "시간외 등락(%)", "시간외 거래량 비율(D/C, %)"],
     color_continuous_scale=["#3b82f6", "#94a3b8", "#f87171"],
     size_max=35,
     template="plotly_dark"
+)
+
+fig.update_traces(
+    hovertemplate=(
+        "<b>%{customdata[0]}</b><br>"
+        "정규장 종가(A): %{customdata[1]:,}원<br>"
+        "시간외 가격(B): %{customdata[2]:,}원<br>"
+        "시간외 등락(%): %{customdata[3]:+.2f}%<br>"
+        "시간외 거래량 비율(D/C, %): %{customdata[4]:.2f}%"
+        "<extra></extra>"
+    )
 )
 
 fig.update_layout(
@@ -514,7 +516,7 @@ st.dataframe(
         "종목코드": st.column_config.TextColumn("종목코드", width="small"),
         "시장": st.column_config.TextColumn("시장", width="small"),
         "거래소": st.column_config.TextColumn("거래소", width="small"),
-        "시가총액": st.column_config.TextColumn("시가총액", width="medium"),
+        "시가총액": st.column_config.TextColumn("시가총액", width="medium", alignment="right"),
         "정규장 종가(A)": st.column_config.NumberColumn("정규장 종가(A)", format="%d원"),
         "정규장 등락(%)": st.column_config.NumberColumn("정규장 등락(%)", format="%.2f%%"),
         "시간외 가격(B)": st.column_config.NumberColumn("시간외 가격(B)", format="%d원"),
