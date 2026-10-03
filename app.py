@@ -138,6 +138,18 @@ st.markdown(
         font-size: 0.78rem;
         margin-top: 4px;
     }
+
+    /* [헤더 가운데 정렬] 데이터프레임 1행 헤더 텍스트 센터링 */
+    div[data-testid="stDataFrame"] div[role="columnheader"],
+    div[data-testid="stDataFrame"] th,
+    div[data-testid="stDataFrame"] .gdg-header {
+        justify-content: center !important;
+        text-align: center !important;
+    }
+    div[data-testid="stDataFrame"] div[role="columnheader"] span {
+        text-align: center !important;
+        width: 100% !important;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -519,8 +531,8 @@ st.dataframe(
     height=480,
     column_config={
         "종목명": st.column_config.TextColumn("종목명"),
-        "종목코드": st.column_config.TextColumn("종목코드"),
-        "시장": st.column_config.TextColumn("시장"),
+        "종목코드": st.column_config.TextColumn("종목코드", alignment="center"),
+        "시장": st.column_config.TextColumn("시장", alignment="center"),
         "시가총액": st.column_config.TextColumn("시가총액", alignment="right"),
         "KRX 정규장 종가": st.column_config.NumberColumn("KRX 정규장 종가", format="%d원"),
         "KRX 시간외 가격": st.column_config.NumberColumn("KRX 시간외 가격", format="%d원"),
