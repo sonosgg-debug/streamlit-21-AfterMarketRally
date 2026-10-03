@@ -77,7 +77,7 @@ def export_to_excel_bytes(df: pd.DataFrame) -> bytes:
                 cell.number_format = "@"
             elif col_name in ["시가총액"]:
                 cell.alignment = Alignment(horizontal="right", vertical="center")
-            elif col_name in ["KRX 정규장 종가", "KRX 시간외 가격", "KRX 거래량", "NXT 거래량"]:
+            elif col_name in ["정규장 종가", "시간외 현재가", "정규장 거래량", "시간외 거래량", "시간외 거래대금"]:
                 cell.alignment = Alignment(horizontal="right", vertical="center")
                 cell.number_format = "#,##0"
             elif col_name in ["시간외 등락률(%)"]:
@@ -95,11 +95,11 @@ def export_to_excel_bytes(df: pd.DataFrame) -> bytes:
                         cell.number_format = '0.00"%"'
                 except (ValueError, TypeError):
                     pass
-            elif col_name in ["NXT 비중(%)"]:
+            elif col_name in ["시간외 거래량 비율(%)", "시간외 NXT 비중(%)"]:
                 cell.alignment = Alignment(horizontal="right", vertical="center")
                 try:
                     num_val = float(cell.value)
-                    if num_val >= 20.0:
+                    if num_val >= 5.0:
                         cell.font = red_font
                     cell.number_format = '0.00"%"'
                 except (ValueError, TypeError):

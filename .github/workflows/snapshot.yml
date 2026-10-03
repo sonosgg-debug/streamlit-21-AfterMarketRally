@@ -1,0 +1,44 @@
+name: 15:30 Market Close Snapshot Collector
+
+on:
+  schedule:
+    # 월~금 (Mon-Fri) 06:32 UTC = 15:32 KST (정규장 마감 2분 후, 애프터마켓 개장 8분 전)
+    - cron: '32 6 * * 1-5'
+  workflow_dispatch: # GitHub 웹 UI 'Actions' 탭에서 언제든지 수동 실행 가능
+
+jobs:
+  collect-snapshot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # GitHub 저장소에 스냅샷 파일 자동 Commit & Push 권한
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pandas
+
+      - name: Run Snapshot Collector
+        run: |
+          python snapshot_collector.py
+
+      - name: Commit and Push Snapshot
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add snapshots/
+          if git diff --staged --quiet; then
+            echo "No snapshot changes to commit."
+          else
+            git commit -m "Auto: 15:30 Market Close Snapshot [$(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M:%S') KST]"
+            git push origin main
+          fi
