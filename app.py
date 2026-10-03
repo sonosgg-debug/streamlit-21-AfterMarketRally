@@ -244,7 +244,7 @@ with st.sidebar:
             format="%d억",
             help="소량(10~100주) 허수 매매를 차단하기 위한 대체거래소(NXT) 거래대금 기준입니다."
         )
-        only_real_rally = st.checkbox("🔥 NXT 활성 거래주만 보기 (NXT 비중 ≥ 10% & NXT 대금 5천만+)", value=True)
+        only_real_rally = st.checkbox("🔥 NXT 활성 거래주만 보기 (NXT 비중 ≥ 30% & NXT 대금 10억+)", value=True)
 
     # [7단계] 하단 액션 버튼 (가이드 02 Type A 표준: 2열 가로 배치)
     st.markdown("<hr style='border: 0; height: 1px; background-color: #334155; margin: 20px 0 16px 0;'>", unsafe_allow_html=True)

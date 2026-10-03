@@ -362,8 +362,8 @@ def get_screener_data(
         if nxt_val == 0 and d_vol > 0 and over_price > 0:
             nxt_val = d_vol * over_price
 
-        # 진성 수급 조건 (NXT 비중 10% 이상 & NXT 거래대금 5천만원 이상)
-        is_real_rally = (nxt_ratio >= 10.0 and nxt_val >= 50_000_000)
+        # 진성 수급 조건 (NXT 비중 30% 이상 & NXT 거래대금 10억 원 이상)
+        is_real_rally = (nxt_ratio >= 30.0 and nxt_val >= 1_000_000_000)
 
         records.append({
             "종목명": name,
