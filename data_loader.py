@@ -241,12 +241,12 @@ def _fetch_naver_batch(code_chunk: list) -> dict:
                 # 네이버 종가 (Fallback용)
                 naver_close = int(item.get("closePriceRaw", 0) or 0)
 
-                # 시간외 거래대금
-                over_val_raw = over_info.get("accumulatedTradingValueRaw")
+                # 대체거래소(NXT) 거래대금
+                nxt_val_raw = over_info.get("accumulatedTradingValueRaw")
                 try:
-                    over_val = int(over_val_raw or 0)
+                    nxt_val = int(nxt_val_raw or 0)
                 except (ValueError, TypeError):
-                    over_val = 0
+                    nxt_val = 0
 
                 result[code] = {
                     "name": name,
@@ -254,7 +254,7 @@ def _fetch_naver_batch(code_chunk: list) -> dict:
                     "krx_vol": c_vol,
                     "nxt_vol": d_vol,
                     "naver_close": naver_close,
-                    "over_val": over_val
+                    "nxt_val": nxt_val
                 }
     except Exception:
         pass
@@ -341,7 +341,7 @@ def get_screener_data(
         c_vol = n_info.get("krx_vol", 0)
         d_vol = n_info.get("nxt_vol", 0)
         naver_close = n_info.get("naver_close", 0)
-        over_val = n_info.get("over_val", 0)
+        nxt_val = n_info.get("nxt_val", 0)
 
         # 다음 금융에서 정규장 종가와 시간외 가격 추출 (부재 시 네이버 Fallback)
         daum_reg, daum_trade = d_info
@@ -358,12 +358,12 @@ def get_screener_data(
         total_vol = c_vol + d_vol
         nxt_ratio = round((d_vol / total_vol) * 100, 2) if total_vol > 0 else 0.0
 
-        # 시간외 거래대금 보정
-        if over_val == 0 and d_vol > 0 and over_price > 0:
-            over_val = d_vol * over_price
+        # NXT 거래대금 보정
+        if nxt_val == 0 and d_vol > 0 and over_price > 0:
+            nxt_val = d_vol * over_price
 
-        # 진성 수급 조건 (NXT 비중 10% 이상 & 시간외 거래대금 5천만원 이상)
-        is_real_rally = (nxt_ratio >= 10.0 and over_val >= 50_000_000)
+        # 진성 수급 조건 (NXT 비중 10% 이상 & NXT 거래대금 5천만원 이상)
+        is_real_rally = (nxt_ratio >= 10.0 and nxt_val >= 50_000_000)
 
         records.append({
             "종목명": name,
@@ -377,7 +377,7 @@ def get_screener_data(
             "KRX 거래량": c_vol,
             "NXT 거래량": d_vol,
             "NXT 비중(%)": nxt_ratio,
-            "시간외 거래대금": over_val,
+            "NXT 거래대금": nxt_val,
             "진성수급": is_real_rally
         })
 
@@ -390,7 +390,7 @@ def get_screener_data(
     if min_nxt_ratio > 0:
         df = df[df["NXT 비중(%)"] >= min_nxt_ratio]
     if min_over_val > 0:
-        df = df[df["시간외 거래대금"] >= (min_over_val * 100_000_000)]
+        df = df[df["NXT 거래대금"] >= (min_over_val * 100_000_000)]
 
     # 기본 정렬: 시간외 등락률(%) 내림차순
     df = df.sort_values(by="시간외 등락률(%)", ascending=False).reset_index(drop=True)

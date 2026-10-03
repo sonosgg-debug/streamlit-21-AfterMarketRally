@@ -236,15 +236,15 @@ with st.sidebar:
             help="전체 거래량(KRX+NXT) 대비 대체거래소(NXT) 거래량의 최소 비중입니다."
         )
         sel_min_val = st.slider(
-            "최소 시간외 거래대금 (억 원)",
+            "최소 NXT 거래대금 (억 원)",
             min_value=0,
             max_value=20,
             value=0,
             step=1,
             format="%d억",
-            help="소량(10~100주) 허수 매매를 차단하기 위한 거래대금 기준입니다."
+            help="소량(10~100주) 허수 매매를 차단하기 위한 대체거래소(NXT) 거래대금 기준입니다."
         )
-        only_real_rally = st.checkbox("🔥 NXT 활성 거래주만 보기 (NXT 비중 ≥ 10% & 대금 5천만+)", value=True)
+        only_real_rally = st.checkbox("🔥 NXT 활성 거래주만 보기 (NXT 비중 ≥ 10% & NXT 대금 5천만+)", value=True)
 
     # [7단계] 하단 액션 버튼 (가이드 02 Type A 표준: 2열 가로 배치)
     st.markdown("<hr style='border: 0; height: 1px; background-color: #334155; margin: 20px 0 16px 0;'>", unsafe_allow_html=True)
@@ -328,7 +328,7 @@ if df_raw.empty:
 total_count = len(df_raw)
 top_gain_row = df_raw.sort_values(by="시간외 등락률(%)", ascending=False).iloc[0]
 top_vol_row = df_raw.sort_values(by="NXT 비중(%)", ascending=False).iloc[0]
-top_val_row = df_raw.sort_values(by="시간외 거래대금", ascending=False).iloc[0]
+top_val_row = df_raw.sort_values(by="NXT 거래대금", ascending=False).iloc[0]
 
 mc1, mc2, mc3, mc4 = st.columns(4)
 with mc1:
@@ -366,13 +366,13 @@ with mc3:
         unsafe_allow_html=True
     )
 with mc4:
-    val_eok = int(top_val_row["시간외 거래대금"] / 100_000_000)
+    val_eok = int(top_val_row["NXT 거래대금"] / 100_000_000)
     st.markdown(
         f"""
         <div class='metric-card'>
-            <div class='metric-title'>💰 시간외 거래대금 1위</div>
+            <div class='metric-title'>💰 NXT 거래대금 1위</div>
             <div class='metric-value'>{top_val_row["종목명"]}</div>
-            <div class='metric-sub' style='color: #a855f7;'>거래대금: {val_eok:,}억 원 (NXT {top_val_row["NXT 거래량"]:,}주)</div>
+            <div class='metric-sub' style='color: #a855f7;'>NXT 대금: {val_eok:,}억 원 (NXT {top_val_row["NXT 거래량"]:,}주)</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -394,7 +394,7 @@ fig = px.scatter(
     df_raw.head(80),
     x="시간외 등락률(%)",
     y="NXT 비중(%)",
-    size="시간외 거래대금",
+    size="NXT 거래대금",
     color="시간외 등락률(%)",
     custom_data=["종목명", "KRX 정규장 종가", "KRX 시간외 가격", "시간외 등락률(%)", "KRX 거래량", "NXT 거래량", "NXT 비중(%)"],
     color_continuous_scale=["#3b82f6", "#94a3b8", "#f87171"],
@@ -469,7 +469,7 @@ with col_sort1:
             "KRX 시간외 가격",
             "KRX 거래량",
             "NXT 거래량",
-            "시간외 거래대금"
+            "NXT 거래대금"
         ],
         index=0
     )
