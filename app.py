@@ -426,7 +426,7 @@ fig.update_layout(
 
 # 1사분면(급등 + 고수급) 하이라이트 주석
 fig.add_annotation(
-    text="🔥 1사분면: 대량 수급 동반 급등주 (내일의 주도주 후보)",
+    text="🔥 1사분면: NXT 거래 동반 시간외 급등주 포착",
     xref="paper", yref="paper",
     x=0.98, y=0.95,
     showarrow=False,
