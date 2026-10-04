@@ -2,8 +2,8 @@ name: 15:30 Market Close Snapshot Collector
 
 on:
   schedule:
-    # 월~금 (Mon-Fri) 06:32 UTC = 15:32 KST (정규장 마감 2분 후, 애프터마켓 개장 8분 전)
-    - cron: '32 6 * * 1-5'
+    # 월~금 (Mon-Fri) 06:35 UTC = 15:35 KST (정규장 마감 5분 후, 애프터마켓 개장 5분 전 완벽 정합)
+    - cron: '35 6 * * 1-5'
   workflow_dispatch: # GitHub 웹 UI 'Actions' 탭에서 언제든지 수동 실행 가능
 
 jobs:
