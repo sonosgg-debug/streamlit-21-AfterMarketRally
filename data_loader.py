@@ -8,9 +8,6 @@ Complies with 00 App_AI_Template Guides:
 
 import os
 import sys
-import socket
-# [가이드 05-1] 전역 소켓 타임아웃 상시 적용
-socket.setdefaulttimeout(5.0)
 
 import json
 from datetime import datetime, timedelta
@@ -32,7 +29,6 @@ def is_krx_trading_day(d: datetime.date) -> bool:
         return False
     return True
 
-
 def get_latest_expected_trading_day() -> str:
     """
     현재 시각 기준으로 가장 최근의 유효 거래일 문자열(YYYY-MM-DD)을 안전하게 산출합니다.
@@ -51,7 +47,6 @@ def get_latest_expected_trading_day() -> str:
         d -= timedelta(days=1)
 
     return (today - timedelta(days=1)).strftime("%Y-%m-%d")
-
 
 def load_market_close_snapshot(target_date: str = None) -> dict:
     """
@@ -102,7 +97,6 @@ def load_market_close_snapshot(target_date: str = None) -> dict:
             pass
 
     return {}
-
 
 def get_market_session_info() -> dict:
     """
@@ -207,7 +201,6 @@ def get_market_session_info() -> dict:
             "has_snapshot": has_snap
         }
 
-
 # ---------------------------------------------------------
 # 2. 유니버스 확보: 시가총액 상위 리스트 고속 수집
 # ---------------------------------------------------------
@@ -271,7 +264,6 @@ def fetch_universe_by_scope(
                 pass
 
     return universe
-
 
 # ---------------------------------------------------------
 # 3. 네이버 증권 & 다음 금융 상호보완적 시세 수집기
@@ -343,7 +335,6 @@ def _fetch_naver_batch(code_chunk: list) -> dict:
 
     return result
 
-
 def _fetch_daum_quote(code: str) -> tuple:
     """
     다음(Daum) 금융 API: KRX 정규장 공식 종가(regularTradePrice) 및 시간외 현재가(tradePrice) 정밀 수집
@@ -363,7 +354,6 @@ def _fetch_daum_quote(code: str) -> tuple:
     except Exception:
         pass
     return code, None, None
-
 
 def get_screener_data(
     market: str = "전체 (ALL)",

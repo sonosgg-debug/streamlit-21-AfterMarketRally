@@ -11,8 +11,6 @@ import os
 import sys
 import json
 import time
-import socket
-socket.setdefaulttimeout(5.0)
 
 from datetime import datetime, timezone, timedelta
 import requests
@@ -38,7 +36,6 @@ KRX_HOLIDAYS = {
     "20270915", "20270916", "20271004", "20271011", "20271225", "20271231"
 }
 
-
 def is_krx_trading_day(d) -> bool:
     """주어진 날짜가 실제 KRX 개장 거래일인지 판정합니다."""
     d_str = d.strftime("%Y%m%d")
@@ -47,7 +44,6 @@ def is_krx_trading_day(d) -> bool:
     if d_str in KRX_HOLIDAYS:  # 법정 공휴일
         return False
     return True
-
 
 def fetch_universe(limit_per_market: int = 300) -> list:
     """네이버 증권 시가총액 API를 호출하여 코스피/코스닥 상위 종목을 수집합니다."""
@@ -83,7 +79,6 @@ def fetch_universe(limit_per_market: int = 300) -> list:
 
     return universe
 
-
 def fetch_batch_quotes(code_chunk: list) -> list:
     """네이버 실시간 배치 API를 호출하여 시세 목록을 반환합니다."""
     if not code_chunk:
@@ -101,7 +96,6 @@ def fetch_batch_quotes(code_chunk: list) -> list:
     except Exception as e:
         print(f"[Warning] Batch fetch error: {e}")
     return []
-
 
 def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
     """
@@ -213,7 +207,6 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
     print(f"  - {latest_file}")
     print(f"  - Total stocks: {len(stocks_data)}, Time elapsed: {elapsed:.2f}s")
     return date_file
-
 
 if __name__ == "__main__":
     # CLI 파라미터 처리

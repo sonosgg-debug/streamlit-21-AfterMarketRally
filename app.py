@@ -8,9 +8,6 @@
 
 import os
 import sys
-import socket
-# [가이드 05-1] 전역 소켓 타임아웃 5초 상시 적용
-socket.setdefaulttimeout(5.0)
 
 from datetime import datetime
 import streamlit as st
