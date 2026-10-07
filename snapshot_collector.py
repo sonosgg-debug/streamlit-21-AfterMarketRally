@@ -16,30 +16,12 @@ from datetime import datetime, timezone, timedelta
 import requests
 from concurrent.futures import ThreadPoolExecutor
 
-# 타임존 설정 (KST = UTC+9)
-KST = timezone(timedelta(hours=9))
-
-# KRX 법정 공휴일 캘린더 (2025~2027)
-KRX_HOLIDAYS = {
-    # 2025년
-    "20250101", "20250127", "20250128", "20250129", "20250130",
-    "20250303", "20250505", "20250506", "20250606", "20250815",
-    "20251003", "20251006", "20251007", "20251008", "20251009",
-    "20251225", "20251231",
-    # 2026년
-    "20260101", "20260216", "20260217", "20260218", "20260302",
-    "20260505", "20260525", "20260603", "20260717", "20260817",
-    "20260924", "20260925", "20261005", "20261009", "20261225", "20261231",
-    # 2027년
-    "20270101", "20270205", "20270208", "20270209", "20270301",
-    "20270505", "20270513", "20270604", "20270816", "20270914",
-    "20270915", "20270916", "20271004", "20271011", "20271225", "20271231"
-}
+from config import KST, KRX_HOLIDAYS
 
 def is_krx_trading_day(d) -> bool:
     """주어진 날짜가 실제 KRX 개장 거래일인지 판정합니다."""
     d_str = d.strftime("%Y%m%d")
-    if d.weekday() >= 5:  # 주말
+    if d.weekday() >= 5:  # 주말 (토요일: 5, 일요일: 6)
         return False
     if d_str in KRX_HOLIDAYS:  # 법정 공휴일
         return False
@@ -103,15 +85,21 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
     """
     now_kst = datetime.now(KST)
 
-    # 거래일 검증
-    if not force:
-        today = now_kst.date()
-        if not is_krx_trading_day(today):
-            print(f"[*] Today ({today}) is a weekend or holiday. Snapshot skipped.")
-            return None
-
-    if target_date_str is None:
+    # 수집 대상 날짜 결정 및 검증
+    if target_date_str:
+        try:
+            target_date = datetime.strptime(target_date_str, "%Y%m%d").date()
+        except Exception:
+            target_date = now_kst.date()
+    else:
+        target_date = now_kst.date()
         target_date_str = now_kst.strftime("%Y%m%d")
+
+    # 거래일 검증: 주말(토/일) 및 법정 공휴일 수집 절대 차단 (--force 가 명시된 경우만 예외)
+    if not force:
+        if not is_krx_trading_day(target_date):
+            print(f"[*] Target date ({target_date}) is a weekend or KRX holiday. Snapshot collection skipped.")
+            return None
 
     print(f"[*] Starting 15:30 Snapshot collection for date: {target_date_str} at {now_kst.strftime('%Y-%m-%d %H:%M:%S KST')}...")
     t0 = time.time()
@@ -219,8 +207,5 @@ if __name__ == "__main__":
         elif arg == "--force":
             force_run = True
 
-    # GitHub Actions 환경이거나 수동 실행 시
-    if "--force" not in sys.argv:
-        force_run = True  # 직접 실행 시 기본 허용
-
+    # --force 플래그가 명시된 경우에만 force_run=True 적용 (기본값: False로서 주말/공휴일 검사 철저 수행)
     collect_snapshot(target_date_str=target_date, force=force_run)

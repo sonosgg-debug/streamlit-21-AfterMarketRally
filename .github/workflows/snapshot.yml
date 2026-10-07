@@ -5,6 +5,12 @@ on:
     # 월~금 (Mon-Fri) 06:35 UTC = 15:35 KST (정규장 마감 5분 후, 애프터마켓 개장 5분 전 완벽 정합)
     - cron: '35 6 * * 1-5'
   workflow_dispatch: # GitHub 웹 UI 'Actions' 탭에서 언제든지 수동 실행 가능
+    inputs:
+      force:
+        description: '휴장일/공휴일 검사를 무시하고 강제 수집할지 여부 (기본: false)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   collect-snapshot:
@@ -29,7 +35,11 @@ jobs:
 
       - name: Run Snapshot Collector
         run: |
-          python snapshot_collector.py
+          if [ "${{ inputs.force }}" = "true" ]; then
+            python snapshot_collector.py --force
+          else
+            python snapshot_collector.py
+          fi
 
       - name: Commit and Push Snapshot
         run: |
