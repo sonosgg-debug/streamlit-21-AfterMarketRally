@@ -29,6 +29,9 @@ DEFAULT_SCOPE = "시가총액 상위 200개 (쾌속 모드)"
 MIN_MARKET_CAP_OPTIONS = [0, 300, 500, 1000, 2000, 3000, 5000, 10000]
 DEFAULT_MIN_MARKET_CAP = 1000  # 기본 1,000억 원 이상
 
+# 4-1. 조회 기준일 최대 보관/조회 영업일 수 (영업일 기준 최근 5일)
+MAX_HISTORICAL_DAYS = 5
+
 # 5. 엑셀 헤더 규격 (1행)
 EXCEL_HEADERS = [
     "종목명",

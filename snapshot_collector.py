@@ -16,7 +16,8 @@ from datetime import datetime, timezone, timedelta
 import requests
 from concurrent.futures import ThreadPoolExecutor
 
-from config import KST, KRX_HOLIDAYS
+import re
+from config import KST, KRX_HOLIDAYS, MAX_HISTORICAL_DAYS
 
 def is_krx_trading_day(d) -> bool:
     """주어진 날짜가 실제 KRX 개장 거래일인지 판정합니다."""
@@ -194,7 +195,35 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
     print(f"  - {date_file}")
     print(f"  - {latest_file}")
     print(f"  - Total stocks: {len(stocks_data)}, Time elapsed: {elapsed:.2f}s")
+
+    # 최근 5영업일 초과 오래된 스냅샷 파일 자동 정리 (최근 5영업일치만 유지)
+    cleanup_old_snapshots(keep_count=MAX_HISTORICAL_DAYS)
+
     return date_file
+
+def cleanup_old_snapshots(keep_count: int = MAX_HISTORICAL_DAYS):
+    """최근 5영업일 스냅샷 파일만 유지하고, 초과된 오래된 스냅샷 파일은 자동 삭제합니다."""
+    snapshots_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "snapshots")
+    if not os.path.exists(snapshots_dir):
+        return
+
+    pattern = re.compile(r"^snapshot_(\d{8})_1530\.json$")
+    files = []
+    for fname in os.listdir(snapshots_dir):
+        m = pattern.match(fname)
+        if m:
+            files.append((m.group(1), os.path.join(snapshots_dir, fname), fname))
+
+    # 날짜 내림차순 정렬 (최신순)
+    files.sort(key=lambda x: x[0], reverse=True)
+
+    if len(files) > keep_count:
+        for d_str, fpath, fname in files[keep_count:]:
+            try:
+                os.remove(fpath)
+                print(f"[*] Cleaned up old snapshot beyond 5 trading days: {fname}")
+            except Exception as e:
+                print(f"[Warning] Failed to remove {fname}: {e}")
 
 if __name__ == "__main__":
     # CLI 파라미터 처리

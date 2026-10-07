@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import requests
 from concurrent.futures import ThreadPoolExecutor
-from config import KST, KRX_HOLIDAYS, THEME
+from config import KST, KRX_HOLIDAYS, THEME, MAX_HISTORICAL_DAYS
 
 # ---------------------------------------------------------
 # 1. 영업일 및 시장 운영 세션 판정 (가이드 04 준수)
@@ -50,9 +50,10 @@ def get_latest_expected_trading_day() -> str:
 
 import re
 
-def get_available_dates() -> list:
+def get_available_dates(max_days: int = MAX_HISTORICAL_DAYS) -> list:
     """
-    로컬 및 원격 저장소에서 사용 가능한 스냅샷/애프터마켓 거래일 목록(YYYY-MM-DD)을 내림차순으로 반환합니다.
+    로컬 및 원격 저장소에서 사용 가능한 스냅샷/애프터마켓 거래일 목록(YYYY-MM-DD)을
+    영업일 기준 최근 5일(max_days) 이내로 제한하여 내림차순으로 반환합니다.
     """
     snapshots_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "snapshots")
     dates = set()
@@ -77,7 +78,9 @@ def get_available_dates() -> list:
     # 3. 2026-10-07 이후의 공식 유효 데이터만 필터링 (개발 중 임시/부정확 데이터 원천 배제)
     valid_dates = [d for d in dates if d >= "2026-10-07"]
     sorted_dates = sorted(valid_dates, reverse=True)
-    return sorted_dates
+
+    # 4. 영업일 기준 최근 5일(max_days) 전까지만 제한하여 반환
+    return sorted_dates[:max_days]
 
 def get_default_date_mode() -> tuple:
     """

@@ -204,7 +204,7 @@ with st.sidebar:
         date_options,
         index=default_idx,
         label_visibility="collapsed",
-        help="한국 시장 개장 전이나 휴장일에는 직전 거래일 마감 데이터를, 애프터마켓 진행 중(15:40~20:00)에는 실시간 데이터를 조회할 수 있습니다."
+        help="영업일 기준 최근 5일 이내의 마감 데이터 또는 실시간 애프터마켓 데이터를 선택하여 조회할 수 있습니다 (필요 데이터는 엑셀 파일 다운로드로 영구 보관 가능)."
     )
     sel_target_date = date_map[sel_date_label]
 
