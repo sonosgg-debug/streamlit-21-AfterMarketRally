@@ -74,7 +74,9 @@ def get_available_dates() -> list:
     if latest_td:
         dates.add(latest_td)
 
-    sorted_dates = sorted(list(dates), reverse=True)
+    # 3. 2026-10-07 이후의 공식 유효 데이터만 필터링 (개발 중 임시/부정확 데이터 원천 배제)
+    valid_dates = [d for d in dates if d >= "2026-10-07"]
+    sorted_dates = sorted(valid_dates, reverse=True)
     return sorted_dates
 
 def get_default_date_mode() -> tuple:
@@ -110,7 +112,9 @@ def load_market_close_snapshot(target_date: str = None) -> dict:
     snapshots_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "snapshots")
     os.makedirs(snapshots_dir, exist_ok=True)
 
-    # 로컬 파일 후보군
+    # 2026-10-07 이전 개발 임시 데이터는 로드 차단
+    if target_date and target_date.replace("-", "") < "20261007":
+        return {}
     local_files = []
     if target_date:
         d_clean = target_date.replace("-", "")
