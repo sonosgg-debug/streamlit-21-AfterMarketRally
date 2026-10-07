@@ -29,7 +29,10 @@ from config import (
     SCOPES, DEFAULT_SCOPE, MIN_MARKET_CAP_OPTIONS, DEFAULT_MIN_MARKET_CAP,
     EXCEL_HEADERS, THEME
 )
-from data_loader import get_screener_data, get_market_session_info
+from data_loader import (
+    get_screener_data, get_market_session_info,
+    get_available_dates, get_default_date_mode
+)
 from excel_exporter import export_to_excel_bytes
 
 # ==============================================================================
@@ -172,16 +175,58 @@ with st.sidebar:
         unsafe_allow_html=True
     )
 
-    # [2단계] 데이터 기준 안내 카드 (거래소 선택 대체)
+    # [1.5단계] 조회 기준일 (Date) 선택
+    available_dates = get_available_dates()
+    default_mode, default_date = get_default_date_mode()
+
+    LIVE_LABEL = "⚡ 실시간 애프터마켓 (Live)"
+    date_options = [LIVE_LABEL]
+    date_map = {LIVE_LABEL: "LIVE"}
+
+    if available_dates:
+        # 가장 최근 거래일
+        prev_day_label = f"📅 직전 거래일 ({available_dates[0]})"
+        date_options.append(prev_day_label)
+        date_map[prev_day_label] = available_dates[0]
+
+        # 그 외 과거 거래일
+        for past_d in available_dates[1:]:
+            p_label = f"📅 {past_d} 마감"
+            date_options.append(p_label)
+            date_map[p_label] = past_d
+
+    # 기본 선택 인덱스: 개장 전, 정규장, 휴장일이면 직전 거래일(인덱스 1) 우선, 애프터마켓 중이면 실시간(인덱스 0)
+    default_idx = 1 if (default_mode == "DATE" and len(date_options) > 1) else 0
+
+    st.markdown("<div style='font-size: 0.95rem; font-weight: 700; color: #e2e8f0; margin-bottom: 6px;'>📅 조회 기준일 (Date)</div>", unsafe_allow_html=True)
+    sel_date_label = st.selectbox(
+        "조회 기준일",
+        date_options,
+        index=default_idx,
+        label_visibility="collapsed",
+        help="한국 시장 개장 전이나 휴장일에는 직전 거래일 마감 데이터를, 애프터마켓 진행 중(15:40~20:00)에는 실시간 데이터를 조회할 수 있습니다."
+    )
+    sel_target_date = date_map[sel_date_label]
+
+    st.markdown("<hr style='border: 0; height: 1px; background-color: #334155; margin: 12px 0 16px 0;'>", unsafe_allow_html=True)
+
+    # [2단계] 데이터 기준 안내 카드 (선택된 기준일에 따른 동적 안내)
+    if sel_target_date == "LIVE":
+        badge_guide_title = "🏛️ 15:30 스냅샷 차감 분석 (실시간)"
+        badge_guide_desc = "클라우드(GitHub Actions)가 보관한 15:30 정규장 마감 수치 대비 실시간 시간외 거래를 정밀 차감 분석합니다."
+    else:
+        badge_guide_title = f"🏛️ {sel_target_date} 애프터마켓 확정 분석"
+        badge_guide_desc = f"{sel_target_date} 정규장 마감 및 애프터마켓 최종 거래량·체결단가를 정밀 복원하여 완벽 분석합니다."
+
     st.markdown(
-        """
+        f"""
         <div style='background-color: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px 12px; margin-bottom: 16px;'>
             <div style='font-size: 0.78rem; color: #94a3b8; font-weight: 500;'>데이터 수집 체계</div>
             <div style='font-size: 0.88rem; font-weight: 700; color: #38bdf8; margin-top: 2px;'>
-                🏛️ 15:30 스냅샷 차감 분석
+                {badge_guide_title}
             </div>
             <div style='font-size: 0.75rem; color: #64748b; margin-top: 4px; line-height: 1.3;'>
-                클라우드(GitHub Actions)가 보관한 15:30 정규장 마감 수치 대비 실시간 시간외 거래를 정밀 차감 분석합니다.
+                {badge_guide_desc}
             </div>
         </div>
         """,
@@ -259,7 +304,7 @@ with st.sidebar:
 # ==============================================================================
 # 4. 메인 타이틀 및 시장 상태 바 (가이드 01-3, 가이드 04 표준)
 # ==============================================================================
-session_info = get_market_session_info()
+session_info = get_market_session_info(selected_date=sel_target_date)
 
 st.markdown(
     """
@@ -298,13 +343,14 @@ st.markdown(
 # 5. 데이터 수집 및 캐싱 (가이드 04-2, 05-4 준수)
 # ==============================================================================
 @st.cache_data(ttl=60, show_spinner=False)
-def load_cached_screener(market, scope, min_cap, min_r, min_val, only_real):
+def load_cached_screener(market, scope, min_cap, min_r, min_val, only_real, target_date):
     df = get_screener_data(
         market=market,
         scope=scope,
         min_market_cap=min_cap,
         min_vol_ratio=min_r,
-        min_after_val=min_val
+        min_after_val=min_val,
+        target_date=target_date
     )
     if only_real and not df.empty and "진성수급" in df.columns:
         filtered = df[df["진성수급"] == True]
@@ -312,14 +358,29 @@ def load_cached_screener(market, scope, min_cap, min_r, min_val, only_real):
             df = filtered
     return df
 
-with st.spinner("15:30 정규장 스냅샷 대비 실시간 시간외 체결 데이터를 정합 분석 중입니다..."):
+spinner_msg = (
+    "15:30 정규장 스냅샷 대비 실시간 시간외 체결 데이터를 정합 분석 중입니다..."
+    if sel_target_date == "LIVE"
+    else f"{sel_target_date} 애프터마켓 확정 데이터를 정합 분석 중입니다..."
+)
+
+with st.spinner(spinner_msg):
     df_raw = load_cached_screener(
         sel_market, sel_scope,
-        sel_min_market_cap, sel_min_vol_ratio, sel_min_val, only_real_rally
+        sel_min_market_cap, sel_min_vol_ratio, sel_min_val, only_real_rally,
+        sel_target_date
     )
 
 if df_raw.empty:
-    st.warning("⚠️ 선택하신 조건에 일치하는 종목이 없습니다. 사이드바에서 시가총액이나 수급 필터 조건을 완화해 보세요.")
+    if sel_target_date == "LIVE" and session_info.get("status") in ["PRE_MARKET", "CLOSED"]:
+        rec_date = available_dates[0] if available_dates else "직전 거래일"
+        st.warning(
+            f"💡 **현재 한국 시장 개장 전(또는 휴장일) 시간대입니다.**\n\n"
+            f"현재 시각에는 실시간 시간외 거래가 발생하지 않습니다. "
+            f"어제의 애프터마켓 랠리 데이터를 조회하시려면 **사이드바 상단 '📅 조회 기준일'에서 직전 거래일 ({rec_date})**을 선택해 주세요!"
+        )
+    else:
+        st.warning("⚠️ 선택하신 조건에 일치하는 종목이 없습니다. 사이드바에서 시가총액이나 수급 필터 조건을 완화해 보세요.")
     st.stop()
 
 # ==============================================================================
@@ -337,7 +398,7 @@ with mc1:
         <div class='metric-card'>
             <div class='metric-title'>🎯 스크리닝 포착 종목</div>
             <div class='metric-value'>{total_count:,} <span style='font-size: 0.9rem; font-weight: normal; color: #94a3b8;'>개</span></div>
-            <div class='metric-sub' style='color: #38bdf8;'>15:30 스냅샷 대조 | {sel_market.split()[0]}</div>
+            <div class='metric-sub' style='color: #38bdf8;'>{f"{sel_target_date} 확정 대조" if sel_target_date != "LIVE" else "15:30 스냅샷 대조"} | {sel_market.split()[0]}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -498,8 +559,8 @@ df_display = df_display.sort_values(by=sort_column, ascending=ascending).reset_i
 
 # 엑셀 데이터 생성
 excel_data = export_to_excel_bytes(df_display)
-now_file_str = datetime.now(KST).strftime("%Y%m%d_%H%M")
-excel_filename = f"AfterMarket_Rally_{now_file_str}.xlsx"
+date_prefix = sel_target_date.replace("-", "") if sel_target_date != "LIVE" else datetime.now(KST).strftime("%Y%m%d_%H%M")
+excel_filename = f"AfterMarket_Rally_{date_prefix}.xlsx"
 
 # 섹터 제목 및 다운로드 버튼 렌더링 (다운로드 버튼을 섹터 제목 오른쪽 끝에 배치)
 with header_container:
