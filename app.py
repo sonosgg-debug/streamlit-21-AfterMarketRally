@@ -555,6 +555,7 @@ with col_sort1:
             "정규장 거래량",
             "정규장 종가",
             "시간외 현재가",
+            "시가총액(억)",
             "시간외 NXT 비중(%)"
         ],
         index=0
@@ -616,16 +617,16 @@ st.dataframe(
     use_container_width=True,
     height=480,
     column_config={
-        "종목명": st.column_config.TextColumn("종목명"),
         "종목코드": st.column_config.TextColumn("종목코드", alignment="center"),
+        "종목명": st.column_config.TextColumn("종목명"),
         "시장": st.column_config.TextColumn("시장", alignment="center"),
-        "시가총액": st.column_config.TextColumn("시가총액", alignment="right"),
-        "정규장 종가": st.column_config.NumberColumn("정규장 종가", format="%d원"),
-        "시간외 현재가": st.column_config.NumberColumn("시간외 현재가", format="%d원"),
+        "시가총액(억)": st.column_config.NumberColumn("시가총액(억)", format="%d"),
+        "정규장 종가": st.column_config.NumberColumn("정규장 종가", format="%d"),
+        "시간외 현재가": st.column_config.NumberColumn("시간외 현재가", format="%d"),
         "시간외 등락률(%)": st.column_config.NumberColumn("시간외 등락률(%)", format="%.2f%%"),
-        "정규장 거래량": st.column_config.NumberColumn("정규장 거래량", format="%d주"),
-        "시간외 거래량": st.column_config.NumberColumn("시간외 거래량", format="%d주"),
-        "시간외 거래대금": st.column_config.NumberColumn("시간외 거래대금", format="%d원"),
+        "정규장 거래량": st.column_config.NumberColumn("정규장 거래량", format="%d"),
+        "시간외 거래량": st.column_config.NumberColumn("시간외 거래량", format="%d"),
+        "시간외 거래대금": st.column_config.NumberColumn("시간외 거래대금", format="%d"),
         "시간외 거래량 비율(%)": st.column_config.NumberColumn("시간외 거래량 비율(%)", format="%.2f%%"),
         "시간외 NXT 비중(%)": st.column_config.NumberColumn("시간외 NXT 비중(%)", format="%.2f%%")
     },

@@ -525,11 +525,10 @@ def build_historical_screener_data(
         is_real_rally = (vol_ratio >= 0.1 and after_val >= 50_000_000)
 
         records.append({
-            "종목명": name,
             "종목코드": code,
+            "종목명": name,
             "시장": mkt,
-            "시가총액(억)": cap,
-            "시가총액": f"{cap:,}억" if cap > 0 else "-",
+            "시가총액(억)": int(cap) if cap else 0,
             "정규장 종가": close_price,
             "시간외 현재가": over_price,
             "시간외 등락률(%)": over_change_rate,
@@ -701,11 +700,10 @@ def get_screener_data(
         is_real_rally = (vol_ratio >= 0.1 and after_val >= 50_000_000)
 
         records.append({
-            "종목명": name,
             "종목코드": code,
+            "종목명": name,
             "시장": mkt,
-            "시가총액(억)": cap,
-            "시가총액": f"{cap:,}억" if cap > 0 else "-",
+            "시가총액(억)": int(cap) if cap else 0,
             "정규장 종가": reg_price,
             "시간외 현재가": over_price,
             "시간외 등락률(%)": over_change_rate,

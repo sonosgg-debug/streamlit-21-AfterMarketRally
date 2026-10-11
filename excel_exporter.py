@@ -75,9 +75,7 @@ def export_to_excel_bytes(df: pd.DataFrame) -> bytes:
             elif col_name in ["종목코드", "시장"]:
                 cell.alignment = Alignment(horizontal="center", vertical="center")
                 cell.number_format = "@"
-            elif col_name in ["시가총액"]:
-                cell.alignment = Alignment(horizontal="right", vertical="center")
-            elif col_name in ["정규장 종가", "시간외 현재가", "정규장 거래량", "시간외 거래량", "시간외 거래대금"]:
+            elif col_name in ["시가총액(억)", "정규장 종가", "시간외 현재가", "정규장 거래량", "시간외 거래량", "시간외 거래대금"]:
                 cell.alignment = Alignment(horizontal="right", vertical="center")
                 cell.number_format = "#,##0"
             elif col_name in ["시간외 등락률(%)"]:
