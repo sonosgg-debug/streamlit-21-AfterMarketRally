@@ -6,37 +6,28 @@
 ================================================================================
 """
 
-import os
 import sys
+# Python 3.12+ 및 Streamlit Cloud 환경에서 pkg_resources 의존성 결함 방어용 Mock Shim
+try:
+    import pkg_resources
+except Exception:
+    try:
+        import setuptools.command
+        import pkg_resources
+    except Exception:
+        import types
+        pkg_mock = types.ModuleType("pkg_resources")
+        pkg_mock.resource_filename = lambda *args, **kwargs: ""
+        pkg_mock.resource_string = lambda *args, **kwargs: b""
+        pkg_mock.Requirement = type("Requirement", (), {"parse": lambda s: s})
+        pkg_mock.get_distribution = lambda *args, **kwargs: type("Dist", (), {"version": "1.0.0"})()
+        sys.modules["pkg_resources"] = pkg_mock
 
-from datetime import datetime
+import os
 import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
-
-# [가이드 05-6] 보조 모듈 강제 리로드 의무화
-import importlib
-import config
-import data_loader
-import excel_exporter
-importlib.reload(config)
-importlib.reload(data_loader)
-importlib.reload(excel_exporter)
-
-from config import (
-    KST, MARKETS, DEFAULT_MARKET,
-    SCOPES, DEFAULT_SCOPE, MIN_MARKET_CAP_OPTIONS, DEFAULT_MIN_MARKET_CAP,
-    EXCEL_HEADERS, THEME
-)
-from data_loader import (
-    get_screener_data, get_market_session_info,
-    get_available_dates, get_default_date_mode
-)
-from excel_exporter import export_to_excel_bytes
 
 # ==============================================================================
-# 1. 페이지 기본 설정 (favicon.png 우선 적용)
+# 1. 페이지 기본 설정 (Streamlit 명령 최우선 실행 보장)
 # ==============================================================================
 FAVICON_PATH = os.path.join(os.path.dirname(__file__), "favicon.png")
 favicon = FAVICON_PATH if os.path.exists(FAVICON_PATH) else None
@@ -47,6 +38,38 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+from datetime import datetime
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+import importlib
+
+# [가이드 05-6] 보조 모듈 강제 리로드 의무화 및 에러 격리
+try:
+    import config
+    importlib.reload(config)
+    from config import (
+        KST, MARKETS, DEFAULT_MARKET,
+        SCOPES, DEFAULT_SCOPE, MIN_MARKET_CAP_OPTIONS, DEFAULT_MIN_MARKET_CAP,
+        EXCEL_HEADERS, THEME
+    )
+
+    import data_loader
+    importlib.reload(data_loader)
+    from data_loader import (
+        get_screener_data, get_market_session_info,
+        get_available_dates, get_default_date_mode
+    )
+
+    import excel_exporter
+    importlib.reload(excel_exporter)
+    from excel_exporter import export_to_excel_bytes
+except Exception as e:
+    import traceback
+    st.error(f"모듈 로드 중 오류가 발생했습니다: {e}")
+    st.code(traceback.format_exc())
+    st.stop()
 
 # ==============================================================================
 # 2. 공통 CSS 스타일 주입 (가이드 01, 02 표준 규격)
