@@ -273,7 +273,7 @@ with st.sidebar:
     sel_scope = st.selectbox(
         "대상 범위",
         SCOPES,
-        index=0,  # 기본값: 시가총액 상위 200개 (쾌속 모드)
+        index=0,  # 기본값: 시총 상위 200 (쾌속 모드)
         label_visibility="collapsed"
     )
 

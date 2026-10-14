@@ -310,7 +310,7 @@ def get_market_session_info(selected_date: str = "LIVE") -> dict:
 
 def fetch_universe_by_scope(
     market: str = "전체 (ALL)",
-    scope: str = "시가총액 상위 200개",
+    scope: str = "시총 상위 200 (쾌속 모드)",
     **kwargs
 ) -> list:
     """
@@ -327,9 +327,9 @@ def fetch_universe_by_scope(
         target_markets = ["KOSPI", "KOSDAQ"]
 
     # 2. 필요 종목 수 산출
-    if "200개" in scope:
+    if ("200" in scope or "200개" in scope) and "코스피" not in scope:
         limit_per_market = 200 if len(target_markets) == 1 else 100
-    elif "500개" in scope:
+    elif "500" in scope or "500개" in scope:
         limit_per_market = 500 if len(target_markets) == 1 else 250
     elif "코스피 200" in scope:
         limit_per_market = 200 if len(target_markets) == 1 else 150
@@ -461,8 +461,8 @@ def _fetch_daum_quote(code: str) -> tuple:
 def build_historical_screener_data(
     target_date: str,
     market: str = "전체 (ALL)",
-    scope: str = "시가총액 상위 200개 (쾌속 모드)",
-    min_market_cap: int = 1000,
+    scope: str = "시총 상위 200 (쾌속 모드)",
+    min_market_cap: int = 3000,
     min_vol_ratio: float = 0.0,
     min_after_val: int = 0
 ) -> pd.DataFrame:
@@ -546,10 +546,10 @@ def build_historical_screener_data(
     df = pd.DataFrame(records)
 
     # 3. 대상 범위(Scope) 필터링
-    if "200개" in scope:
+    if ("200" in scope or "200개" in scope) and "코스피" not in scope:
         limit_cnt = 200
         df = df.sort_values(by="시가총액(억)", ascending=False).head(limit_cnt)
-    elif "500개" in scope:
+    elif "500" in scope or "500개" in scope:
         limit_cnt = 500
         df = df.sort_values(by="시가총액(억)", ascending=False).head(limit_cnt)
     elif "코스피 200" in scope:
@@ -569,8 +569,8 @@ def build_historical_screener_data(
 
 def get_screener_data(
     market: str = "전체 (ALL)",
-    scope: str = "시가총액 상위 200개 (쾌속 모드)",
-    min_market_cap: int = 1000,
+    scope: str = "시총 상위 200 (쾌속 모드)",
+    min_market_cap: int = 3000,
     min_vol_ratio: float = 0.0,
     min_after_val: int = 0,
     target_date: str = "LIVE",
