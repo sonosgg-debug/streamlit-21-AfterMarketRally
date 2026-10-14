@@ -261,7 +261,7 @@ with st.sidebar:
     sel_market = st.radio(
         "시장 선택",
         MARKETS,
-        index=0,  # 기본값: 전체 (ALL)
+        index=0,  # 기본값: 코스피 (KOSPI)
         horizontal=True,
         label_visibility="collapsed"
     )

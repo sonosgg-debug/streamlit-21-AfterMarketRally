@@ -10,11 +10,11 @@ KST = timezone(timedelta(hours=9))
 
 # 2. 시장 정의
 MARKETS = [
-    "전체 (ALL)",
     "코스피 (KOSPI)",
-    "코스닥 (KOSDAQ)"
+    "코스닥 (KOSDAQ)",
+    "전체 (ALL)"
 ]
-DEFAULT_MARKET = "전체 (ALL)"
+DEFAULT_MARKET = "코스피 (KOSPI)"
 
 # 3. 대상 범위 (Scope) 정의
 SCOPES = [
