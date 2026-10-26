@@ -1,6 +1,6 @@
 {
   "date": "20261026",
-  "timestamp": "2026-10-26T22:29:42.957157+09:00",
+  "timestamp": "2026-10-26T22:48:06.576222+09:00",
   "total_stocks": 600,
   "stocks": {
     "005930": {
@@ -11,9 +11,9 @@
       "krx_volume": 11324970,
       "krx_value": 2419828000000,
       "nxt_volume": 5837051,
-      "nxt_value": 1250439000000,
+      "nxt_value": 1250438000000,
       "total_volume": 17162021,
-      "total_value": 3670267000000
+      "total_value": 3670266000000
     },
     "000660": {
       "name": "SK하이닉스",
@@ -23,9 +23,9 @@
       "krx_volume": 2446837,
       "krx_value": 3151111000000,
       "nxt_volume": 1410655,
-      "nxt_value": 1816602000000,
+      "nxt_value": 1816601000000,
       "total_volume": 3857492,
-      "total_value": 4967713000000
+      "total_value": 4967712000000
     },
     "005935": {
       "name": "삼성전자우",
@@ -83,9 +83,9 @@
       "krx_volume": 33925,
       "krx_value": 49575000000,
       "nxt_volume": 10484,
-      "nxt_value": 15337000000,
+      "nxt_value": 15336000000,
       "total_volume": 44409,
-      "total_value": 64912000000
+      "total_value": 64911000000
     },
     "005380": {
       "name": "현대차",
@@ -131,9 +131,9 @@
       "krx_volume": 286466,
       "krx_value": 83532000000,
       "nxt_volume": 46231,
-      "nxt_value": 13440000000,
+      "nxt_value": 13439000000,
       "total_volume": 332697,
-      "total_value": 96972000000
+      "total_value": 96971000000
     },
     "068270": {
       "name": "셀트리온",
@@ -167,9 +167,9 @@
       "krx_volume": 846396,
       "krx_value": 73064000000,
       "nxt_volume": 72438,
-      "nxt_value": 6287000000,
+      "nxt_value": 6286000000,
       "total_volume": 918834,
-      "total_value": 79351000000
+      "total_value": 79350000000
     },
     "006400": {
       "name": "삼성SDI",
@@ -179,9 +179,9 @@
       "krx_volume": 505272,
       "krx_value": 246833000000,
       "nxt_volume": 398937,
-      "nxt_value": 194693000000,
+      "nxt_value": 194692000000,
       "total_volume": 904209,
-      "total_value": 441526000000
+      "total_value": 441525000000
     },
     "012450": {
       "name": "한화에어로스페이스",
@@ -215,9 +215,9 @@
       "krx_volume": 128680,
       "krx_value": 60158000000,
       "nxt_volume": 25986,
-      "nxt_value": 12118000000,
+      "nxt_value": 12117000000,
       "total_volume": 154666,
-      "total_value": 72276000000
+      "total_value": 72275000000
     },
     "086790": {
       "name": "하나금융지주",
@@ -239,9 +239,9 @@
       "krx_volume": 338701,
       "krx_value": 99295000000,
       "nxt_volume": 79497,
-      "nxt_value": 23373000000,
+      "nxt_value": 23372000000,
       "total_volume": 418198,
-      "total_value": 122668000000
+      "total_value": 122667000000
     },
     "012330": {
       "name": "현대모비스",
@@ -263,9 +263,9 @@
       "krx_volume": 61373,
       "krx_value": 36743000000,
       "nxt_volume": 3439,
-      "nxt_value": 2062000000,
+      "nxt_value": 2061000000,
       "total_volume": 64812,
-      "total_value": 38805000000
+      "total_value": 38804000000
     },
     "035420": {
       "name": "NAVER",
@@ -287,9 +287,9 @@
       "krx_volume": 422519,
       "krx_value": 66046000000,
       "nxt_volume": 189890,
-      "nxt_value": 29676000000,
+      "nxt_value": 29675000000,
       "total_volume": 612409,
-      "total_value": 95722000000
+      "total_value": 95721000000
     },
     "096770": {
       "name": "SK이노베이션",
@@ -311,9 +311,9 @@
       "krx_volume": 346354,
       "krx_value": 53401000000,
       "nxt_volume": 200678,
-      "nxt_value": 30886000000,
+      "nxt_value": 30885000000,
       "total_volume": 547032,
-      "total_value": 84287000000
+      "total_value": 84286000000
     },
     "316140": {
       "name": "우리금융지주",
@@ -323,9 +323,9 @@
       "krx_volume": 1576911,
       "krx_value": 46551000000,
       "nxt_volume": 517958,
-      "nxt_value": 15370000000,
+      "nxt_value": 15369000000,
       "total_volume": 2094869,
-      "total_value": 61921000000
+      "total_value": 61920000000
     },
     "069500": {
       "name": "KODEX 200",
@@ -359,9 +359,9 @@
       "krx_volume": 625001,
       "krx_value": 14045000000,
       "nxt_volume": 355807,
-      "nxt_value": 7998000000,
+      "nxt_value": 7997000000,
       "total_volume": 980808,
-      "total_value": 22043000000
+      "total_value": 22042000000
     },
     "138040": {
       "name": "메리츠금융지주",
@@ -371,9 +371,9 @@
       "krx_volume": 193355,
       "krx_value": 24308000000,
       "nxt_volume": 17898,
-      "nxt_value": 2251000000,
+      "nxt_value": 2250000000,
       "total_volume": 211253,
-      "total_value": 26559000000
+      "total_value": 26558000000
     },
     "360750": {
       "name": "TIGER 미국S&P500",
@@ -395,9 +395,9 @@
       "krx_volume": 225389,
       "krx_value": 42584000000,
       "nxt_volume": 15395,
-      "nxt_value": 2914000000,
+      "nxt_value": 2913000000,
       "total_volume": 240784,
-      "total_value": 45498000000
+      "total_value": 45497000000
     },
     "015760": {
       "name": "한국전력",
@@ -407,9 +407,9 @@
       "krx_volume": 891375,
       "krx_value": 25141000000,
       "nxt_volume": 221792,
-      "nxt_value": 6252000000,
+      "nxt_value": 6251000000,
       "total_volume": 1113167,
-      "total_value": 31393000000
+      "total_value": 31392000000
     },
     "010130": {
       "name": "고려아연",
@@ -419,9 +419,9 @@
       "krx_volume": 10042,
       "krx_value": 8522000000,
       "nxt_volume": 4433,
-      "nxt_value": 3772000000,
+      "nxt_value": 3771000000,
       "total_volume": 14475,
-      "total_value": 12294000000
+      "total_value": 12293000000
     },
     "042700": {
       "name": "한미반도체",
@@ -443,9 +443,9 @@
       "krx_volume": 27508,
       "krx_value": 51166000000,
       "nxt_volume": 9898,
-      "nxt_value": 18350000000,
+      "nxt_value": 18349000000,
       "total_volume": 37406,
-      "total_value": 69516000000
+      "total_value": 69515000000
     },
     "009540": {
       "name": "HD한국조선해양",
@@ -467,9 +467,9 @@
       "krx_volume": 427453,
       "krx_value": 91645000000,
       "nxt_volume": 77926,
-      "nxt_value": 16665000000,
+      "nxt_value": 16664000000,
       "total_volume": 505379,
-      "total_value": 108310000000
+      "total_value": 108309000000
     },
     "042660": {
       "name": "한화오션",
@@ -479,9 +479,9 @@
       "krx_volume": 759772,
       "krx_value": 40660000000,
       "nxt_volume": 602586,
-      "nxt_value": 32297000000,
+      "nxt_value": 32296000000,
       "total_volume": 1362358,
-      "total_value": 72957000000
+      "total_value": 72956000000
     },
     "267260": {
       "name": "HD현대일렉트릭",
@@ -503,9 +503,9 @@
       "krx_volume": 172591,
       "krx_value": 38884000000,
       "nxt_volume": 39037,
-      "nxt_value": 8791000000,
+      "nxt_value": 8790000000,
       "total_volume": 211628,
-      "total_value": 47675000000
+      "total_value": 47674000000
     },
     "017670": {
       "name": "SK텔레콤",
@@ -527,9 +527,9 @@
       "krx_volume": 838032,
       "krx_value": 16059000000,
       "nxt_volume": 158957,
-      "nxt_value": 3052000000,
+      "nxt_value": 3051000000,
       "total_volume": 996989,
-      "total_value": 19111000000
+      "total_value": 19110000000
     },
     "003550": {
       "name": "LG",
@@ -551,9 +551,9 @@
       "krx_volume": 285817,
       "krx_value": 36901000000,
       "nxt_volume": 84690,
-      "nxt_value": 11064000000,
+      "nxt_value": 11063000000,
       "total_volume": 370507,
-      "total_value": 47965000000
+      "total_value": 47964000000
     },
     "010140": {
       "name": "삼성중공업",
@@ -563,9 +563,9 @@
       "krx_volume": 2501394,
       "krx_value": 41102000000,
       "nxt_volume": 1786861,
-      "nxt_value": 29352000000,
+      "nxt_value": 29351000000,
       "total_volume": 4288255,
-      "total_value": 70454000000
+      "total_value": 70453000000
     },
     "003670": {
       "name": "포스코퓨처엠",
@@ -611,9 +611,9 @@
       "krx_volume": 648245,
       "krx_value": 15589000000,
       "nxt_volume": 260674,
-      "nxt_value": 6266000000,
+      "nxt_value": 6265000000,
       "total_volume": 908919,
-      "total_value": 21855000000
+      "total_value": 21854000000
     },
     "000150": {
       "name": "두산",
@@ -647,9 +647,9 @@
       "krx_volume": 865060,
       "krx_value": 54161000000,
       "nxt_volume": 419123,
-      "nxt_value": 26325000000,
+      "nxt_value": 26324000000,
       "total_volume": 1284183,
-      "total_value": 80486000000
+      "total_value": 80485000000
     },
     "005830": {
       "name": "DB손해보험",
@@ -659,9 +659,9 @@
       "krx_volume": 87790,
       "krx_value": 15840000000,
       "nxt_volume": 10322,
-      "nxt_value": 1871000000,
+      "nxt_value": 1870000000,
       "total_volume": 98112,
-      "total_value": 17711000000
+      "total_value": 17710000000
     },
     "028050": {
       "name": "삼성E&A",
@@ -719,9 +719,9 @@
       "krx_volume": 164027,
       "krx_value": 46145000000,
       "nxt_volume": 39045,
-      "nxt_value": 10961000000,
+      "nxt_value": 10960000000,
       "total_volume": 203072,
-      "total_value": 57106000000
+      "total_value": 57105000000
     },
     "379800": {
       "name": "KODEX 미국S&P500",
@@ -791,9 +791,9 @@
       "krx_volume": 306693,
       "krx_value": 132030000000,
       "nxt_volume": 128517,
-      "nxt_value": 55817000000,
+      "nxt_value": 55816000000,
       "total_volume": 435210,
-      "total_value": 187847000000
+      "total_value": 187846000000
     },
     "003490": {
       "name": "대한항공",
@@ -815,9 +815,9 @@
       "krx_volume": 253092,
       "krx_value": 12644000000,
       "nxt_volume": 150676,
-      "nxt_value": 7537000000,
+      "nxt_value": 7536000000,
       "total_volume": 403768,
-      "total_value": 20181000000
+      "total_value": 20180000000
     },
     "011070": {
       "name": "LG이노텍",
@@ -827,9 +827,9 @@
       "krx_volume": 104847,
       "krx_value": 38746000000,
       "nxt_volume": 65162,
-      "nxt_value": 24097000000,
+      "nxt_value": 24096000000,
       "total_volume": 170009,
-      "total_value": 62843000000
+      "total_value": 62842000000
     },
     "307950": {
       "name": "현대오토에버",
@@ -839,9 +839,9 @@
       "krx_volume": 35677,
       "krx_value": 11261000000,
       "nxt_volume": 19283,
-      "nxt_value": 6096000000,
+      "nxt_value": 6095000000,
       "total_volume": 54960,
-      "total_value": 17357000000
+      "total_value": 17356000000
     },
     "064350": {
       "name": "현대로템",
@@ -851,9 +851,9 @@
       "krx_volume": 438826,
       "krx_value": 34863000000,
       "nxt_volume": 179080,
-      "nxt_value": 14233000000,
+      "nxt_value": 14232000000,
       "total_volume": 617906,
-      "total_value": 49096000000
+      "total_value": 49095000000
     },
     "102110": {
       "name": "TIGER 200",
@@ -899,9 +899,9 @@
       "krx_volume": 36440,
       "krx_value": 6686000000,
       "nxt_volume": 5432,
-      "nxt_value": 992000000,
+      "nxt_value": 991000000,
       "total_volume": 41872,
-      "total_value": 7678000000
+      "total_value": 7677000000
     },
     "071050": {
       "name": "한국금융지주",
@@ -911,9 +911,9 @@
       "krx_volume": 117347,
       "krx_value": 17070000000,
       "nxt_volume": 32391,
-      "nxt_value": 4727000000,
+      "nxt_value": 4726000000,
       "total_volume": 149738,
-      "total_value": 21797000000
+      "total_value": 21796000000
     },
     "180640": {
       "name": "한진칼",
@@ -935,9 +935,9 @@
       "krx_volume": 21423,
       "krx_value": 6829000000,
       "nxt_volume": 13866,
-      "nxt_value": 4445000000,
+      "nxt_value": 4444000000,
       "total_volume": 35289,
-      "total_value": 11274000000
+      "total_value": 11273000000
     },
     "352820": {
       "name": "하이브",
@@ -947,9 +947,9 @@
       "krx_volume": 137667,
       "krx_value": 24122000000,
       "nxt_volume": 41548,
-      "nxt_value": 7272000000,
+      "nxt_value": 7271000000,
       "total_volume": 179215,
-      "total_value": 31394000000
+      "total_value": 31393000000
     },
     "443060": {
       "name": "HD현대마린솔루션",
@@ -1055,9 +1055,9 @@
       "krx_volume": 224339,
       "krx_value": 17136000000,
       "nxt_volume": 68653,
-      "nxt_value": 5236000000,
+      "nxt_value": 5235000000,
       "total_volume": 292992,
-      "total_value": 22372000000
+      "total_value": 22371000000
     },
     "000500": {
       "name": "가온전선",
@@ -1067,9 +1067,9 @@
       "krx_volume": 84534,
       "krx_value": 19358000000,
       "nxt_volume": 84515,
-      "nxt_value": 19256000000,
+      "nxt_value": 19255000000,
       "total_volume": 169049,
-      "total_value": 38614000000
+      "total_value": 38613000000
     },
     "006260": {
       "name": "LS",
@@ -1079,9 +1079,9 @@
       "krx_volume": 106948,
       "krx_value": 22499000000,
       "nxt_volume": 35137,
-      "nxt_value": 7381000000,
+      "nxt_value": 7380000000,
       "total_volume": 142085,
-      "total_value": 29880000000
+      "total_value": 29879000000
     },
     "278530": {
       "name": "KODEX 200TR",
@@ -1103,9 +1103,9 @@
       "krx_volume": 349647,
       "krx_value": 29361000000,
       "nxt_volume": 191256,
-      "nxt_value": 16120000000,
+      "nxt_value": 16119000000,
       "total_volume": 540903,
-      "total_value": 45481000000
+      "total_value": 45480000000
     },
     "032640": {
       "name": "LG유플러스",
@@ -1127,9 +1127,9 @@
       "krx_volume": 165207,
       "krx_value": 13637000000,
       "nxt_volume": 61539,
-      "nxt_value": 5089000000,
+      "nxt_value": 5088000000,
       "total_volume": 226746,
-      "total_value": 18726000000
+      "total_value": 18725000000
     },
     "326030": {
       "name": "SK바이오팜",
@@ -1139,9 +1139,9 @@
       "krx_volume": 134585,
       "krx_value": 10289000000,
       "nxt_volume": 30872,
-      "nxt_value": 2352000000,
+      "nxt_value": 2351000000,
       "total_volume": 165457,
-      "total_value": 12641000000
+      "total_value": 12640000000
     },
     "009830": {
       "name": "한화솔루션",
@@ -1187,9 +1187,9 @@
       "krx_volume": 48306,
       "krx_value": 10183000000,
       "nxt_volume": 6239,
-      "nxt_value": 1317000000,
+      "nxt_value": 1316000000,
       "total_volume": 54545,
-      "total_value": 11500000000
+      "total_value": 11499000000
     },
     "005387": {
       "name": "현대차2우B",
@@ -1235,9 +1235,9 @@
       "krx_volume": 103792,
       "krx_value": 16684000000,
       "nxt_volume": 72535,
-      "nxt_value": 11657000000,
+      "nxt_value": 11656000000,
       "total_volume": 176327,
-      "total_value": 28341000000
+      "total_value": 28340000000
     },
     "000880": {
       "name": "한화",
@@ -1271,9 +1271,9 @@
       "krx_volume": 104753,
       "krx_value": 5107000000,
       "nxt_volume": 13212,
-      "nxt_value": 645000000,
+      "nxt_value": 644000000,
       "total_volume": 117965,
-      "total_value": 5752000000
+      "total_value": 5751000000
     },
     "088980": {
       "name": "맥쿼리인프라",
@@ -1343,9 +1343,9 @@
       "krx_volume": 95434,
       "krx_value": 3153000000,
       "nxt_volume": 66110,
-      "nxt_value": 2185000000,
+      "nxt_value": 2184000000,
       "total_volume": 161544,
-      "total_value": 5338000000
+      "total_value": 5337000000
     },
     "271560": {
       "name": "오리온",
@@ -1415,9 +1415,9 @@
       "krx_volume": 190942,
       "krx_value": 18002000000,
       "nxt_volume": 79040,
-      "nxt_value": 7477000000,
+      "nxt_value": 7476000000,
       "total_volume": 269982,
-      "total_value": 25479000000
+      "total_value": 25478000000
     },
     "001440": {
       "name": "대한전선",
@@ -1451,9 +1451,9 @@
       "krx_volume": 420432,
       "krx_value": 35581000000,
       "nxt_volume": 164044,
-      "nxt_value": 13816000000,
+      "nxt_value": 13815000000,
       "total_volume": 584476,
-      "total_value": 49397000000
+      "total_value": 49396000000
     },
     "360200": {
       "name": "ACE 미국S&P500",
@@ -1595,9 +1595,9 @@
       "krx_volume": 120524,
       "krx_value": 11359000000,
       "nxt_volume": 7765,
-      "nxt_value": 732000000,
+      "nxt_value": 731000000,
       "total_volume": 128289,
-      "total_value": 12091000000
+      "total_value": 12090000000
     },
     "148020": {
       "name": "RISE 200",
@@ -1667,9 +1667,9 @@
       "krx_volume": 262006,
       "krx_value": 6947000000,
       "nxt_volume": 145549,
-      "nxt_value": 3874000000,
+      "nxt_value": 3873000000,
       "total_volume": 407555,
-      "total_value": 10821000000
+      "total_value": 10820000000
     },
     "052690": {
       "name": "한전기술",
@@ -1751,9 +1751,9 @@
       "krx_volume": 117612,
       "krx_value": 13434000000,
       "nxt_volume": 15703,
-      "nxt_value": 1790000000,
+      "nxt_value": 1789000000,
       "total_volume": 133315,
-      "total_value": 15224000000
+      "total_value": 15223000000
     },
     "273130": {
       "name": "KODEX 종합채권(AA-이상)액티브",
@@ -1787,9 +1787,9 @@
       "krx_volume": 20094,
       "krx_value": 7481000000,
       "nxt_volume": 2952,
-      "nxt_value": 1100000000,
+      "nxt_value": 1099000000,
       "total_volume": 23046,
-      "total_value": 8581000000
+      "total_value": 8580000000
     },
     "028670": {
       "name": "팬오션",
@@ -1859,9 +1859,9 @@
       "krx_volume": 266988,
       "krx_value": 3720000000,
       "nxt_volume": 121682,
-      "nxt_value": 1697000000,
+      "nxt_value": 1696000000,
       "total_volume": 388670,
-      "total_value": 5417000000
+      "total_value": 5416000000
     },
     "008930": {
       "name": "한미사이언스",
@@ -1871,9 +1871,9 @@
       "krx_volume": 113682,
       "krx_value": 4786000000,
       "nxt_volume": 44385,
-      "nxt_value": 1856000000,
+      "nxt_value": 1855000000,
       "total_volume": 158067,
-      "total_value": 6642000000
+      "total_value": 6641000000
     },
     "022100": {
       "name": "포스코DX",
@@ -1919,9 +1919,9 @@
       "krx_volume": 225147,
       "krx_value": 26644000000,
       "nxt_volume": 36035,
-      "nxt_value": 4281000000,
+      "nxt_value": 4280000000,
       "total_volume": 261182,
-      "total_value": 30925000000
+      "total_value": 30924000000
     },
     "026960": {
       "name": "동서",
@@ -1931,9 +1931,9 @@
       "krx_volume": 48974,
       "krx_value": 1342000000,
       "nxt_volume": 15902,
-      "nxt_value": 437000000,
+      "nxt_value": 436000000,
       "total_volume": 64876,
-      "total_value": 1779000000
+      "total_value": 1778000000
     },
     "395270": {
       "name": "HANARO Fn K-반도체",
@@ -1967,9 +1967,9 @@
       "krx_volume": 184518,
       "krx_value": 10239000000,
       "nxt_volume": 184668,
-      "nxt_value": 10261000000,
+      "nxt_value": 10260000000,
       "total_volume": 369186,
-      "total_value": 20500000000
+      "total_value": 20499000000
     },
     "017800": {
       "name": "현대엘리베이터",
@@ -1979,9 +1979,9 @@
       "krx_volume": 91494,
       "krx_value": 6126000000,
       "nxt_volume": 29246,
-      "nxt_value": 1954000000,
+      "nxt_value": 1953000000,
       "total_volume": 120740,
-      "total_value": 8080000000
+      "total_value": 8079000000
     },
     "233740": {
       "name": "KODEX 코스닥150레버리지",
@@ -2075,9 +2075,9 @@
       "krx_volume": 144516,
       "krx_value": 1989000000,
       "nxt_volume": 34034,
-      "nxt_value": 469000000,
+      "nxt_value": 468000000,
       "total_volume": 178550,
-      "total_value": 2458000000
+      "total_value": 2457000000
     },
     "020150": {
       "name": "롯데에너지머티리얼즈",
@@ -2135,9 +2135,9 @@
       "krx_volume": 79493,
       "krx_value": 3143000000,
       "nxt_volume": 13724,
-      "nxt_value": 545000000,
+      "nxt_value": 544000000,
       "total_volume": 93217,
-      "total_value": 3688000000
+      "total_value": 3687000000
     },
     "004170": {
       "name": "신세계",
@@ -2147,9 +2147,9 @@
       "krx_volume": 36736,
       "krx_value": 9071000000,
       "nxt_volume": 7429,
-      "nxt_value": 1835000000,
+      "nxt_value": 1834000000,
       "total_volume": 44165,
-      "total_value": 10906000000
+      "total_value": 10905000000
     },
     "383220": {
       "name": "F&F",
@@ -2159,9 +2159,9 @@
       "krx_volume": 75073,
       "krx_value": 4543000000,
       "nxt_volume": 8723,
-      "nxt_value": 530000000,
+      "nxt_value": 529000000,
       "total_volume": 83796,
-      "total_value": 5073000000
+      "total_value": 5072000000
     },
     "023530": {
       "name": "롯데쇼핑",
@@ -2219,9 +2219,9 @@
       "krx_volume": 63573,
       "krx_value": 3113000000,
       "nxt_volume": 9066,
-      "nxt_value": 443000000,
+      "nxt_value": 442000000,
       "total_volume": 72639,
-      "total_value": 3556000000
+      "total_value": 3555000000
     },
     "085620": {
       "name": "미래에셋생명",
@@ -2255,9 +2255,9 @@
       "krx_volume": 46511,
       "krx_value": 5907000000,
       "nxt_volume": 2092,
-      "nxt_value": 267000000,
+      "nxt_value": 266000000,
       "total_volume": 48603,
-      "total_value": 6174000000
+      "total_value": 6173000000
     },
     "385540": {
       "name": "RISE 종합채권(A-이상)액티브",
@@ -2291,9 +2291,9 @@
       "krx_volume": 30454,
       "krx_value": 6257000000,
       "nxt_volume": 2808,
-      "nxt_value": 577000000,
+      "nxt_value": 576000000,
       "total_volume": 33262,
-      "total_value": 6834000000
+      "total_value": 6833000000
     },
     "375500": {
       "name": "DL이앤씨",
@@ -2315,9 +2315,9 @@
       "krx_volume": 62093,
       "krx_value": 1414000000,
       "nxt_volume": 9667,
-      "nxt_value": 219000000,
+      "nxt_value": 218000000,
       "total_volume": 71760,
-      "total_value": 1633000000
+      "total_value": 1632000000
     },
     "009970": {
       "name": "영원무역홀딩스",
@@ -2327,9 +2327,9 @@
       "krx_volume": 7285,
       "krx_value": 1181000000,
       "nxt_volume": 438,
-      "nxt_value": 72000000,
+      "nxt_value": 71000000,
       "total_volume": 7723,
-      "total_value": 1253000000
+      "total_value": 1252000000
     },
     "004990": {
       "name": "롯데지주",
@@ -2339,9 +2339,9 @@
       "krx_volume": 81332,
       "krx_value": 1732000000,
       "nxt_volume": 38658,
-      "nxt_value": 825000000,
+      "nxt_value": 824000000,
       "total_volume": 119990,
-      "total_value": 2557000000
+      "total_value": 2556000000
     },
     "161510": {
       "name": "PLUS 고배당주",
@@ -2363,9 +2363,9 @@
       "krx_volume": 240711,
       "krx_value": 17078000000,
       "nxt_volume": 247852,
-      "nxt_value": 17513000000,
+      "nxt_value": 17512000000,
       "total_volume": 488563,
-      "total_value": 34591000000
+      "total_value": 34590000000
     },
     "279570": {
       "name": "케이뱅크",
@@ -2399,9 +2399,9 @@
       "krx_volume": 133747,
       "krx_value": 5220000000,
       "nxt_volume": 75676,
-      "nxt_value": 2956000000,
+      "nxt_value": 2955000000,
       "total_volume": 209423,
-      "total_value": 8176000000
+      "total_value": 8175000000
     },
     "011170": {
       "name": "롯데케미칼",
@@ -2411,9 +2411,9 @@
       "krx_volume": 97626,
       "krx_value": 4584000000,
       "nxt_volume": 47344,
-      "nxt_value": 2227000000,
+      "nxt_value": 2226000000,
       "total_volume": 144970,
-      "total_value": 6811000000
+      "total_value": 6810000000
     },
     "005440": {
       "name": "현대지에프홀딩스",
@@ -2423,9 +2423,9 @@
       "krx_volume": 126984,
       "krx_value": 1366000000,
       "nxt_volume": 37124,
-      "nxt_value": 400000000,
+      "nxt_value": 399000000,
       "total_volume": 164108,
-      "total_value": 1766000000
+      "total_value": 1765000000
     },
     "336260": {
       "name": "두산퓨얼셀",
@@ -2471,9 +2471,9 @@
       "krx_volume": 2393,
       "krx_value": 284000000,
       "nxt_volume": 824,
-      "nxt_value": 98000000,
+      "nxt_value": 97000000,
       "total_volume": 3217,
-      "total_value": 382000000
+      "total_value": 381000000
     },
     "081660": {
       "name": "미스토홀딩스",
@@ -2495,9 +2495,9 @@
       "krx_volume": 16907,
       "krx_value": 1947000000,
       "nxt_volume": 3114,
-      "nxt_value": 359000000,
+      "nxt_value": 358000000,
       "total_volume": 20021,
-      "total_value": 2306000000
+      "total_value": 2305000000
     },
     "278540": {
       "name": "KODEX MSCI Korea TR",
@@ -2531,9 +2531,9 @@
       "krx_volume": 85016,
       "krx_value": 12659000000,
       "nxt_volume": 17371,
-      "nxt_value": 2586000000,
+      "nxt_value": 2585000000,
       "total_volume": 102387,
-      "total_value": 15245000000
+      "total_value": 15244000000
     },
     "002790": {
       "name": "아모레퍼시픽홀딩스",
@@ -2615,9 +2615,9 @@
       "krx_volume": 103767,
       "krx_value": 2165000000,
       "nxt_volume": 8017,
-      "nxt_value": 167000000,
+      "nxt_value": 166000000,
       "total_volume": 111784,
-      "total_value": 2332000000
+      "total_value": 2331000000
     },
     "462870": {
       "name": "시프트업",
@@ -2627,9 +2627,9 @@
       "krx_volume": 35605,
       "krx_value": 1049000000,
       "nxt_volume": 15955,
-      "nxt_value": 472000000,
+      "nxt_value": 471000000,
       "total_volume": 51560,
-      "total_value": 1521000000
+      "total_value": 1520000000
     },
     "204320": {
       "name": "HL만도",
@@ -2699,9 +2699,9 @@
       "krx_volume": 148583,
       "krx_value": 8152000000,
       "nxt_volume": 90835,
-      "nxt_value": 4991000000,
+      "nxt_value": 4990000000,
       "total_volume": 239418,
-      "total_value": 13143000000
+      "total_value": 13142000000
     },
     "007810": {
       "name": "코리아써키트",
@@ -2759,9 +2759,9 @@
       "krx_volume": 145646,
       "krx_value": 6014000000,
       "nxt_volume": 19634,
-      "nxt_value": 808000000,
+      "nxt_value": 807000000,
       "total_volume": 165280,
-      "total_value": 6822000000
+      "total_value": 6821000000
     },
     "069960": {
       "name": "현대백화점",
@@ -2795,9 +2795,9 @@
       "krx_volume": 95758,
       "krx_value": 4735000000,
       "nxt_volume": 31263,
-      "nxt_value": 1545000000,
+      "nxt_value": 1544000000,
       "total_volume": 127021,
-      "total_value": 6280000000
+      "total_value": 6279000000
     },
     "610063": {
       "name": "메리츠 KIS CD금리투자 ETN",
@@ -2831,9 +2831,9 @@
       "krx_volume": 13287,
       "krx_value": 1728000000,
       "nxt_volume": 3538,
-      "nxt_value": 459000000,
+      "nxt_value": 458000000,
       "total_volume": 16825,
-      "total_value": 2187000000
+      "total_value": 2186000000
     },
     "379780": {
       "name": "RISE 미국S&P500",
@@ -2855,9 +2855,9 @@
       "krx_volume": 15299,
       "krx_value": 516000000,
       "nxt_volume": 5584,
-      "nxt_value": 189000000,
+      "nxt_value": 188000000,
       "total_volume": 20883,
-      "total_value": 705000000
+      "total_value": 704000000
     },
     "453850": {
       "name": "ACE 미국30년국채액티브(H)",
@@ -2939,9 +2939,9 @@
       "krx_volume": 44714,
       "krx_value": 305000000,
       "nxt_volume": 29681,
-      "nxt_value": 203000000,
+      "nxt_value": 202000000,
       "total_volume": 74395,
-      "total_value": 508000000
+      "total_value": 507000000
     },
     "294400": {
       "name": "KIWOOM 200TR",
@@ -2963,9 +2963,9 @@
       "krx_volume": 26947,
       "krx_value": 983000000,
       "nxt_volume": 21448,
-      "nxt_value": 782000000,
+      "nxt_value": 781000000,
       "total_volume": 48395,
-      "total_value": 1765000000
+      "total_value": 1764000000
     },
     "105190": {
       "name": "ACE 200",
@@ -3035,9 +3035,9 @@
       "krx_volume": 42206,
       "krx_value": 2083000000,
       "nxt_volume": 12837,
-      "nxt_value": 632000000,
+      "nxt_value": 631000000,
       "total_volume": 55043,
-      "total_value": 2715000000
+      "total_value": 2714000000
     },
     "001800": {
       "name": "오리온홀딩스",
@@ -3167,9 +3167,9 @@
       "krx_volume": 3888,
       "krx_value": 1207000000,
       "nxt_volume": 662,
-      "nxt_value": 206000000,
+      "nxt_value": 205000000,
       "total_volume": 4550,
-      "total_value": 1413000000
+      "total_value": 1412000000
     },
     "005070": {
       "name": "코스모신소재",
@@ -3191,9 +3191,9 @@
       "krx_volume": 65237,
       "krx_value": 1093000000,
       "nxt_volume": 10674,
-      "nxt_value": 179000000,
+      "nxt_value": 178000000,
       "total_volume": 75911,
-      "total_value": 1272000000
+      "total_value": 1271000000
     },
     "415640": {
       "name": "KB발해인프라",
@@ -3227,9 +3227,9 @@
       "krx_volume": 51103,
       "krx_value": 1048000000,
       "nxt_volume": 10449,
-      "nxt_value": 215000000,
+      "nxt_value": 214000000,
       "total_volume": 61552,
-      "total_value": 1263000000
+      "total_value": 1262000000
     },
     "438080": {
       "name": "ACE 미국S&P500미국채혼합50액티브",
@@ -3287,9 +3287,9 @@
       "krx_volume": 329353,
       "krx_value": 13371000000,
       "nxt_volume": 94216,
-      "nxt_value": 3807000000,
+      "nxt_value": 3806000000,
       "total_volume": 423569,
-      "total_value": 17178000000
+      "total_value": 17177000000
     },
     "071970": {
       "name": "HD현대마린엔진",
@@ -3395,9 +3395,9 @@
       "krx_volume": 78878,
       "krx_value": 2513000000,
       "nxt_volume": 26572,
-      "nxt_value": 843000000,
+      "nxt_value": 842000000,
       "total_volume": 105450,
-      "total_value": 3356000000
+      "total_value": 3355000000
     },
     "009155": {
       "name": "삼성전기우",
@@ -3431,9 +3431,9 @@
       "krx_volume": 25785,
       "krx_value": 1348000000,
       "nxt_volume": 2648,
-      "nxt_value": 139000000,
+      "nxt_value": 138000000,
       "total_volume": 28433,
-      "total_value": 1487000000
+      "total_value": 1486000000
     },
     "000080": {
       "name": "하이트진로",
