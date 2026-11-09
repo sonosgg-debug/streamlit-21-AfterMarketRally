@@ -4,6 +4,7 @@
 - 실행 시점: 월~금 매일 한국 시각 15:35 (UTC 06:35)
 - 기능: 시가총액 상위 종목(600개)의 정규장 마감 거래량/거래대금/종가를 즉시 수집하여 스냅샷 JSON 파일로 저장
 - 저장 경로: snapshots/snapshot_YYYYMMDD_1530.json 및 snapshots/latest_snapshot.json
+- 개선: 중복 실행 방지(Lock), 이미 존재하는 유효 파일에 대한 Early Return(캐시 보호)
 ================================================================================
 """
 
@@ -11,6 +12,7 @@ import os
 import sys
 import json
 import time
+import threading
 
 from datetime import datetime, timezone, timedelta
 import requests
@@ -18,6 +20,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import re
 from config import KST, KRX_HOLIDAYS, MAX_HISTORICAL_DAYS
+
+_collector_lock = threading.Lock()
 
 def is_krx_trading_day(d) -> bool:
     """주어진 날짜가 실제 KRX 개장 거래일인지 판정합니다."""
@@ -96,110 +100,146 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
         target_date = now_kst.date()
         target_date_str = now_kst.strftime("%Y%m%d")
 
+    snapshots_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "snapshots")
+    os.makedirs(snapshots_dir, exist_ok=True)
+    date_file = os.path.join(snapshots_dir, f"snapshot_{target_date_str}_1530.json")
+    latest_file = os.path.join(snapshots_dir, "latest_snapshot.json")
+
+    # Early return: 이미 해당 날짜의 유효한 스냅샷이 존재하면 즉시 반환
+    if not force and os.path.exists(date_file):
+        try:
+            with open(date_file, "r", encoding="utf-8") as f:
+                d = json.load(f)
+                if d and d.get("stocks") and len(d.get("stocks")) > 0:
+                    print(f"[*] Snapshot for {target_date_str} already exists ({len(d.get('stocks'))} stocks). Returning existing file.")
+                    return date_file
+        except Exception:
+            pass
+
     # 거래일 검증: 주말(토/일) 및 법정 공휴일 수집 절대 차단 (--force 가 명시된 경우만 예외)
     if not force:
         if not is_krx_trading_day(target_date):
             print(f"[*] Target date ({target_date}) is a weekend or KRX holiday. Snapshot collection skipped.")
             return None
 
-    print(f"[*] Starting 15:30 Snapshot collection for date: {target_date_str} at {now_kst.strftime('%Y-%m-%d %H:%M:%S KST')}...")
-    t0 = time.time()
+    with _collector_lock:
+        # 락 획득 후 재검사 (Double-Checked Locking)
+        if not force and os.path.exists(date_file):
+            try:
+                with open(date_file, "r", encoding="utf-8") as f:
+                    d = json.load(f)
+                    if d and d.get("stocks") and len(d.get("stocks")) > 0:
+                        return date_file
+            except Exception:
+                pass
 
-    # 1. 대상 유니버스 수집 (코스피 300 + 코스닥 300 = 600개)
-    universe = fetch_universe(limit_per_market=300)
-    if not universe:
-        print("[Error] Failed to collect stock universe.")
-        return None
-    print(f"[*] Universe collected: {len(universe)} stocks.")
+        print(f"[*] Starting 15:30 Snapshot collection for date: {target_date_str} at {now_kst.strftime('%Y-%m-%d %H:%M:%S KST')}...")
+        t0 = time.time()
 
-    codes = [u["code"] for u in universe]
-    code_map = {u["code"]: u for u in universe}
+        # 1. 대상 유니버스 수집 (코스피 300 + 코스닥 300 = 600개)
+        universe = fetch_universe(limit_per_market=300)
+        if not universe:
+            print("[Error] Failed to collect stock universe.")
+            return None
+        print(f"[*] Universe collected: {len(universe)} stocks.")
 
-    # 2. 배치 시세 수집
-    chunk_size = 25
-    chunks = [codes[i:i + chunk_size] for i in range(0, len(codes), chunk_size)]
-    quotes = []
+        codes = [u["code"] for u in universe]
+        code_map = {u["code"]: u for u in universe}
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        for res in executor.map(fetch_batch_quotes, chunks):
-            quotes.extend(res)
+        # 2. 배치 시세 수집
+        chunk_size = 25
+        chunks = [codes[i:i + chunk_size] for i in range(0, len(codes), chunk_size)]
+        quotes = []
 
-    print(f"[*] Quotes collected: {len(quotes)} items in {time.time() - t0:.2f}s.")
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            for res in executor.map(fetch_batch_quotes, chunks):
+                quotes.extend(res)
 
-    # 3. 데이터 구조화
-    stocks_data = {}
-    for item in quotes:
-        if not isinstance(item, dict):
-            continue
-        code = str(item.get("itemCode", "")).zfill(6)
-        u_info = code_map.get(code, {})
-        name = item.get("stockName", u_info.get("name", ""))
-        mkt = u_info.get("market", "KOSPI")
-        cap = u_info.get("market_cap", 0)
+        print(f"[*] Quotes collected: {len(quotes)} items in {time.time() - t0:.2f}s.")
 
-        # 정규장 종가
-        close_price = int(item.get("closePriceRaw", 0) or 0)
+        # 3. 데이터 구조화
+        stocks_data = {}
+        for item in quotes:
+            if not isinstance(item, dict):
+                continue
+            code = str(item.get("itemCode", "")).zfill(6)
+            u_info = code_map.get(code, {})
+            name = item.get("stockName", u_info.get("name", ""))
+            mkt = u_info.get("market", "KOSPI")
+            cap = u_info.get("market_cap", 0)
 
-        # KRX 누적 거래량 & 거래대금
-        krx_vol = int(item.get("accumulatedTradingVolumeRaw", 0) or 0)
-        krx_val = int(item.get("accumulatedTradingValueRaw", 0) or 0)
+            # 정규장 종가
+            close_price = int(item.get("closePriceRaw", 0) or 0)
 
-        # NXT 누적 거래량 & 거래대금
-        over_info = item.get("overMarketPriceInfo", {}) or {}
-        nxt_vol = int(over_info.get("accumulatedTradingVolumeRaw", 0) or 0)
-        nxt_val = int(over_info.get("accumulatedTradingValueRaw", 0) or 0)
+            # KRX 누적 거래량 & 거래대금
+            krx_vol = int(item.get("accumulatedTradingVolumeRaw", 0) or 0)
+            krx_val = int(item.get("accumulatedTradingValueRaw", 0) or 0)
 
-        # 통합 거래량 & 거래대금
-        integ_info = item.get("integratedPriceInfo", {}) or {}
-        integ_vol_raw = integ_info.get("accumulatedTradingVolumeRaw")
-        integ_val_raw = integ_info.get("accumulatedTradingValueRaw")
+            # NXT 누적 거래량 & 거래대금
+            over_info = item.get("overMarketPriceInfo", {}) or {}
+            nxt_vol = int(over_info.get("accumulatedTradingVolumeRaw", 0) or 0)
+            nxt_val = int(over_info.get("accumulatedTradingValueRaw", 0) or 0)
 
-        total_vol = int(integ_vol_raw) if integ_vol_raw else (krx_vol + nxt_vol)
-        total_val = int(integ_val_raw) if integ_val_raw else (krx_val + nxt_val)
+            # 통합 거래량 & 거래대금
+            integ_info = item.get("integratedPriceInfo", {}) or {}
+            integ_vol_raw = integ_info.get("accumulatedTradingVolumeRaw")
+            integ_val_raw = integ_info.get("accumulatedTradingValueRaw")
 
-        stocks_data[code] = {
-            "name": name,
-            "market": mkt,
-            "market_cap": cap,
-            "close_price": close_price,
-            "krx_volume": krx_vol,
-            "krx_value": krx_val,
-            "nxt_volume": nxt_vol,
-            "nxt_value": nxt_val,
-            "total_volume": total_vol,
-            "total_value": total_val
+            total_vol = int(integ_vol_raw) if integ_vol_raw else (krx_vol + nxt_vol)
+            total_val = int(integ_val_raw) if integ_val_raw else (krx_val + nxt_val)
+
+            stocks_data[code] = {
+                "name": name,
+                "market": mkt,
+                "market_cap": cap,
+                "close_price": close_price,
+                "krx_volume": krx_vol,
+                "krx_value": krx_val,
+                "nxt_volume": nxt_vol,
+                "nxt_value": nxt_val,
+                "total_volume": total_vol,
+                "total_value": total_val
+            }
+
+        snapshot_payload = {
+            "date": target_date_str,
+            "timestamp": now_kst.isoformat(),
+            "total_stocks": len(stocks_data),
+            "stocks": stocks_data
         }
 
-    snapshot_payload = {
-        "date": target_date_str,
-        "timestamp": now_kst.isoformat(),
-        "total_stocks": len(stocks_data),
-        "stocks": stocks_data
-    }
+        # 4. 파일 저장 (임시 파일 작성 후 원자적 교체)
+        tmp_date_file = date_file + ".tmp"
+        with open(tmp_date_file, "w", encoding="utf-8") as f:
+            json.dump(snapshot_payload, f, ensure_ascii=False, indent=2)
+        if os.path.exists(date_file):
+            try:
+                os.remove(date_file)
+            except Exception:
+                pass
+        os.replace(tmp_date_file, date_file)
 
-    # 4. 파일 저장
-    snapshots_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "snapshots")
-    os.makedirs(snapshots_dir, exist_ok=True)
+        # latest_snapshot.json도 동기화
+        tmp_latest_file = latest_file + ".tmp"
+        with open(tmp_latest_file, "w", encoding="utf-8") as f:
+            json.dump(snapshot_payload, f, ensure_ascii=False, indent=2)
+        if os.path.exists(latest_file):
+            try:
+                os.remove(latest_file)
+            except Exception:
+                pass
+        os.replace(tmp_latest_file, latest_file)
 
-    date_file = os.path.join(snapshots_dir, f"snapshot_{target_date_str}_1530.json")
-    latest_file = os.path.join(snapshots_dir, "latest_snapshot.json")
+        elapsed = time.time() - t0
+        print(f"[Success] Snapshot saved successfully to:")
+        print(f"  - {date_file}")
+        print(f"  - {latest_file}")
+        print(f"  - Total stocks: {len(stocks_data)}, Time elapsed: {elapsed:.2f}s")
 
-    with open(date_file, "w", encoding="utf-8") as f:
-        json.dump(snapshot_payload, f, ensure_ascii=False, indent=2)
+        # 최근 5영업일 초과 오래된 스냅샷 파일 자동 정리 (최근 5영업일치만 유지)
+        cleanup_old_snapshots(keep_count=MAX_HISTORICAL_DAYS)
 
-    with open(latest_file, "w", encoding="utf-8") as f:
-        json.dump(snapshot_payload, f, ensure_ascii=False, indent=2)
-
-    elapsed = time.time() - t0
-    print(f"[Success] Snapshot saved successfully to:")
-    print(f"  - {date_file}")
-    print(f"  - {latest_file}")
-    print(f"  - Total stocks: {len(stocks_data)}, Time elapsed: {elapsed:.2f}s")
-
-    # 최근 5영업일 초과 오래된 스냅샷 파일 자동 정리 (최근 5영업일치만 유지)
-    cleanup_old_snapshots(keep_count=MAX_HISTORICAL_DAYS)
-
-    return date_file
+        return date_file
 
 def cleanup_old_snapshots(keep_count: int = MAX_HISTORICAL_DAYS):
     """최근 5영업일 스냅샷 파일만 유지하고, 초과된 오래된 스냅샷 파일은 자동 삭제합니다."""

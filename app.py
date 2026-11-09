@@ -412,7 +412,7 @@ if df_raw.empty:
 total_count = len(df_raw)
 top_gain_row = df_raw.sort_values(by="시간외 등락률(%)", ascending=False).iloc[0]
 top_vol_row = df_raw.sort_values(by="시간외 거래량 비율(%)", ascending=False).iloc[0]
-top_val_row = df_raw.sort_values(by="시간외 거래대금", ascending=False).iloc[0]
+top_val_row = df_raw.sort_values(by="시간외 거래대금(억)", ascending=False).iloc[0]
 
 mc1, mc2, mc3, mc4 = st.columns(4)
 with mc1:
@@ -480,7 +480,7 @@ fig = px.scatter(
     y="시간외 거래량 비율(%)",
     size="시간외 거래대금",
     color="시간외 등락률(%)",
-    custom_data=["종목명", "정규장 종가", "시간외 현재가", "시간외 등락률(%)", "정규장 거래량", "시간외 거래량", "시간외 거래대금", "시간외 거래량 비율(%)"],
+    custom_data=["종목명", "정규장 종가", "시간외 현재가", "시간외 등락률(%)", "정규장 거래량", "시간외 거래량", "시간외 거래대금(억)", "시간외 거래량 비율(%)"],
     color_continuous_scale=["#3b82f6", "#94a3b8", "#f87171"],
     size_max=35,
     template="plotly_dark"
@@ -494,7 +494,7 @@ fig.update_traces(
         "시간외 등락률: %{customdata[3]:+.2f}%<br>"
         "정규장 거래량: %{customdata[4]:,}주<br>"
         "시간외 거래량: %{customdata[5]:,}주<br>"
-        "시간외 거래대금: %{customdata[6]:,}원<br>"
+        "시간외 거래대금: %{customdata[6]:.1f}억 원<br>"
         "시간외 거래량 비율: %{customdata[7]:.2f}%"
         "<extra></extra>"
     )
@@ -550,7 +550,7 @@ with col_sort1:
         [
             "시간외 등락률(%)",
             "시간외 거래량 비율(%)",
-            "시간외 거래대금",
+            "시간외 거래대금(억)",
             "시간외 거래량",
             "정규장 거래량",
             "정규장 종가",
@@ -626,7 +626,8 @@ st.dataframe(
         "시간외 등락률(%)": st.column_config.NumberColumn("시간외 등락률(%)", format="%.2f%%"),
         "정규장 거래량": st.column_config.NumberColumn("정규장 거래량", format="%d"),
         "시간외 거래량": st.column_config.NumberColumn("시간외 거래량", format="%d"),
-        "시간외 거래대금": st.column_config.NumberColumn("시간외 거래대금", format="%d"),
+        "시간외 거래대금(억)": st.column_config.NumberColumn("시간외 거래대금(억)", format="%.1f"),
+        "시간외 거래대금": st.column_config.NumberColumn("시간외 거래대금(억)", format="%.1f"),
         "시간외 거래량 비율(%)": st.column_config.NumberColumn("시간외 거래량 비율(%)", format="%.2f%%"),
         "시간외 NXT 비중(%)": st.column_config.NumberColumn("시간외 NXT 비중(%)", format="%.2f%%")
     },
