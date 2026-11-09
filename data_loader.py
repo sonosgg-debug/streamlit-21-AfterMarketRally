@@ -620,20 +620,31 @@ def build_historical_screener_data(
         tot_val = int(s.get("total_value", 0) or 0)
 
         # 정규장 거래량 vs 시간외 거래량/대금 산출
-        reg_vol = krx_vol if krx_vol > 0 else tot_vol
-        after_vol = nxt_vol if nxt_vol > 0 else max(0, tot_vol - krx_vol)
-        after_val = nxt_val if nxt_val > 0 else max(0, tot_val - krx_val)
+        stored_reg_vol = s.get("reg_volume")
+        stored_after_vol = s.get("after_volume")
+        stored_after_val = s.get("after_value")
+        stored_nxt_ratio = s.get("nxt_after_ratio")
 
         # [시간외 현재가 결정 로직 전면 개선: 실제 체결 호가 우선 + 호가 단위 엄격 준수]
-        # (기존의 after_val / after_vol 단순 나눗셈에 의한 1원 단위 호가 왜곡 완전 폐기)
         stored_over_price = s.get("over_price")
         if stored_over_price and stored_over_price > 0:
             over_price = align_to_krx_tick(stored_over_price)
-        elif after_vol > 0 and after_val > 0:
-            # 구형 스냅샷 보정: 가중평균치를 반드시 KRX 정규 호가 단위로 반올림 정렬
-            over_price = align_to_krx_tick(after_val / after_vol)
+        elif s.get("after_value") and s.get("after_volume"):
+            over_price = align_to_krx_tick(s["after_value"] / s["after_volume"])
         else:
             over_price = close_price
+
+        # 확정 스냅샷 내 사전 산출된 시간외 수치 우선 적용
+        if stored_after_vol is not None and stored_nxt_ratio is not None:
+            reg_vol = int(stored_reg_vol) if stored_reg_vol else (krx_vol if krx_vol > 0 else tot_vol)
+            after_vol = int(stored_after_vol)
+            after_val = int(stored_after_val) if stored_after_val else int(after_vol * over_price)
+            nxt_after_ratio = float(stored_nxt_ratio)
+        else:
+            reg_vol = krx_vol if krx_vol > 0 else tot_vol
+            after_vol = max(0, tot_vol - krx_vol)
+            after_val = max(0, tot_val - krx_val)
+            nxt_after_ratio = round((nxt_vol / tot_vol) * 100, 2) if tot_vol > 0 else 0.0
 
         # 시간외 등락률 계산
         stored_change_rate = s.get("over_change_rate")
@@ -646,9 +657,6 @@ def build_historical_screener_data(
 
         # 시간외 거래량 비율(%)
         vol_ratio = round((after_vol / reg_vol) * 100, 2) if reg_vol > 0 else 0.0
-
-        # 시간외 NXT 비중(%)
-        nxt_after_ratio = round((nxt_vol / after_vol) * 100, 2) if after_vol > 0 else 0.0
 
         # 진성 수급 조건
         is_real_rally = (vol_ratio >= 0.1 and after_val >= 50_000_000)
@@ -828,28 +836,39 @@ def get_screener_data(
         live_total_val = n_info.get("total_val", live_krx_val + live_nxt_val)
 
         # (5) 시간외 거래량/거래대금 산출
+        snap_reg_vol = snap.get("reg_volume")
+        snap_after_vol = snap.get("after_volume")
+        snap_after_val = snap.get("after_value")
+        snap_nxt_ratio = snap.get("nxt_after_ratio")
+        snap_after_nxt = snap.get("after_nxt_volume")
+
         snap_total_vol = snap.get("total_volume", 0) if snap_is_today else 0
         snap_total_val = snap.get("total_value", 0) if snap_is_today else 0
         snap_nxt_vol = snap.get("nxt_volume", 0) if snap_is_today else 0
         snap_krx_vol = snap.get("krx_volume", 0) if snap_is_today else 0
 
-        if snap_is_today and snap_total_vol > 0:
-            reg_vol = snap_krx_vol if snap_krx_vol > 0 else snap_total_vol
-            after_vol = max(0, live_total_vol - snap_total_vol)
-            after_val = max(0, live_total_val - snap_total_val)
+        # Case 1: 스냅샷에 당일 확정 시간외 수치가 이미 완비되어 있는 경우 (20:00 마감 후 확정 스냅샷)
+        if snap_is_today and snap_after_vol is not None and snap_nxt_ratio is not None:
+            reg_vol = int(snap_reg_vol) if snap_reg_vol and snap_reg_vol > 0 else (snap_krx_vol if snap_krx_vol > 0 else snap_total_vol)
+            after_vol = int(snap_after_vol)
+            after_nxt_vol = int(snap_after_nxt) if snap_after_nxt is not None else int(round(after_vol * (snap_nxt_ratio / 100.0)))
+            after_val = int(snap_after_val) if snap_after_val else int(after_vol * over_price)
+            nxt_after_ratio = float(snap_nxt_ratio)
+        elif snap_is_today and snap_total_vol > 0:
+            # Case 2: 15:30 정규장 마감 스냅샷 기준 실시간 차감 계산 (15:40~20:00 장중 및 실시간)
+            reg_vol = snap_total_vol
+            after_krx = max(0, live_krx_vol - snap_krx_vol) if snap_krx_vol > 0 else max(0, live_total_vol - snap_total_vol)
             after_nxt_vol = max(0, live_nxt_vol - snap_nxt_vol)
-
-            if live_nxt_vol > after_vol:
-                after_vol = live_nxt_vol
-                after_val = live_nxt_val if live_nxt_val > 0 else (live_nxt_vol * over_price)
-                after_nxt_vol = live_nxt_vol
-                if live_krx_vol > 0:
-                    reg_vol = live_krx_vol
+            after_vol = after_krx + after_nxt_vol
+            after_val = max(0, live_total_val - snap_total_val)
+            nxt_after_ratio = round((after_nxt_vol / after_vol) * 100, 2) if after_vol > 0 else 0.0
         else:
-            reg_vol = live_krx_vol if live_krx_vol > 0 else live_total_vol
-            after_vol = live_nxt_vol
-            after_val = live_nxt_val if live_nxt_val > 0 else (live_nxt_vol * over_price)
-            after_nxt_vol = live_nxt_vol
+            # Case 3: 스냅샷 부재 시 (오류 방지를 위해 0으로 정규화)
+            reg_vol = live_total_vol
+            after_vol = 0
+            after_val = 0
+            after_nxt_vol = 0
+            nxt_after_ratio = 0.0
 
         if after_val == 0 and after_vol > 0 and over_price > 0:
             after_val = after_vol * over_price
@@ -857,8 +876,9 @@ def get_screener_data(
         # (6) 시간외 거래량 비율(%) = {시간외 거래량 / 정규장 거래량} * 100
         vol_ratio = round((after_vol / reg_vol) * 100, 2) if reg_vol > 0 else 0.0
 
-        # (7) 시간외 NXT 비중(%) = {시간외 NXT 거래량 / 시간외 거래량} * 100
-        nxt_after_ratio = round((after_nxt_vol / after_vol) * 100, 2) if after_vol > 0 else 0.0
+        # (7) 시간외 NXT 비중(%) 안전 가드
+        if after_vol == 0:
+            nxt_after_ratio = 0.0
 
         # (8) 진성 수급 조건: 시간외 거래량 비율 0.1% 이상 & 시간외 거래대금 5천만원 이상
         is_real_rally = (vol_ratio >= 0.1 and after_val >= 50_000_000)

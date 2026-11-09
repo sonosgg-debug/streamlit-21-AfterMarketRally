@@ -112,6 +112,37 @@ def fetch_batch_quotes(code_chunk: list) -> list:
         print(f"[Warning] Batch fetch error: {e}")
     return []
 
+def fetch_stock_minute_breakdown(code: str, target_date_str: str) -> dict:
+    """
+    네이버 증권 KRX 및 NXT 1분봉 차트 API를 호출하여
+    15:30 정규장 거래량과 15:40~20:00 시간외 거래량을 정밀 분리 추출합니다.
+    """
+    headers = {"User-Agent": "Mozilla/5.0"}
+    cutoff_dt = f"{target_date_str}153000"
+    try:
+        r1 = requests.get(f"https://api.stock.naver.com/chart/domestic/item/{code}/minute", headers=headers, timeout=3.0)
+        d1 = r1.json() if r1.status_code == 200 else []
+        krx_reg = sum(x["accumulatedTradingVolume"] for x in d1 if x.get("localDateTime", "") <= cutoff_dt)
+        krx_aft = sum(x["accumulatedTradingVolume"] for x in d1 if x.get("localDateTime", "") > cutoff_dt)
+
+        r2 = requests.get(f"https://api.stock.naver.com/chart/domestic/NXT/item/{code}/minute", headers=headers, timeout=3.0)
+        d2 = r2.json() if r2.status_code == 200 else []
+        nxt_reg = sum(x["accumulatedTradingVolume"] for x in d2 if x.get("localDateTime", "") <= cutoff_dt)
+        nxt_aft = sum(x["accumulatedTradingVolume"] for x in d2 if x.get("localDateTime", "") > cutoff_dt)
+
+        tot_reg = krx_reg + nxt_reg
+        tot_aft = krx_aft + nxt_aft
+        nxt_ratio = round((nxt_aft / tot_aft * 100), 2) if tot_aft > 0 else 0.0
+
+        return {
+            "reg_volume": tot_reg,
+            "after_volume": tot_aft,
+            "after_nxt_volume": nxt_aft,
+            "nxt_after_ratio": nxt_ratio
+        }
+    except Exception:
+        return {}
+
 def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
     """
     15:30 정규장 마감 및 애프터마켓 실제 체결가/수급 스냅샷을 수집하고 snapshots/ 폴더에 JSON 파일로 저장합니다.
@@ -133,7 +164,7 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
     date_file = os.path.join(snapshots_dir, f"snapshot_{target_date_str}_1530.json")
     latest_file = os.path.join(snapshots_dir, "latest_snapshot.json")
 
-    # Early return: 이미 해당 날짜의 유효한 스냅샷이 존재하고, over_price 필드가 온전히 갖춰져 있으면 기존 파일 반환
+    # Early return: 이미 해당 날짜의 유효한 스냅샷이 존재하고, over_price 및 after_volume 필드가 온전히 갖춰져 있으면 기존 파일 반환
     if not force and os.path.exists(date_file):
         try:
             with open(date_file, "r", encoding="utf-8") as f:
@@ -141,8 +172,8 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
                 stocks = d.get("stocks", {})
                 if stocks and len(stocks) > 0:
                     sample_stock = next(iter(stocks.values()))
-                    if "over_price" in sample_stock:
-                        print(f"[*] Snapshot for {target_date_str} already exists with over_price ({len(stocks)} stocks). Returning existing file.")
+                    if "over_price" in sample_stock and "after_volume" in sample_stock and "nxt_after_ratio" in sample_stock:
+                        print(f"[*] Snapshot for {target_date_str} already exists with complete aftermarket fields ({len(stocks)} stocks). Returning existing file.")
                         return date_file
         except Exception:
             pass
@@ -176,6 +207,37 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
                 quotes.extend(res)
 
         print(f"[*] Quotes collected: {len(quotes)} items in {time.time() - t0:.2f}s.")
+
+        # 기존 15:30 기준점 스냅샷 존재 여부 확인
+        existing_baseline = {}
+        if os.path.exists(date_file):
+            try:
+                with open(date_file, "r", encoding="utf-8") as f:
+                    old_data = json.load(f)
+                    if old_data.get("session") == "BASELINE_1530":
+                        existing_baseline = old_data.get("stocks", {})
+            except Exception:
+                pass
+
+        # 수집 시점 판별: 15:30~15:45 사이면 정규장 마감 기준점(BASELINE), 그 이후면 애프터마켓 완료 반영
+        is_baseline_window = (now_kst.hour == 15 and 30 <= now_kst.minute <= 45)
+
+        # 만약 장 마감 후인데 15:30 기준점이 없다면, 1분봉 차트에서 정밀 분리 추출
+        need_minute_reconstruct = (not is_baseline_window and not existing_baseline)
+        minute_map = {}
+        if need_minute_reconstruct:
+            print("[*] Baseline 15:30 missing. Reconstructing regular vs aftermarket via minute candle API...")
+            with ThreadPoolExecutor(max_workers=25) as executor:
+                futures = {executor.submit(fetch_stock_minute_breakdown, c, target_date_str): c for c in codes}
+                for f in futures:
+                    c = futures[f]
+                    try:
+                        res = f.result()
+                        if res:
+                            minute_map[c] = res
+                    except Exception:
+                        pass
+            print(f"[*] Reconstructed minute breakdown for {len(minute_map)} stocks.")
 
         # 3. 데이터 구조화
         stocks_data = {}
@@ -233,6 +295,38 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
             total_vol = int(integ_vol_raw) if integ_vol_raw else (krx_vol + nxt_vol)
             total_val = int(integ_val_raw) if integ_val_raw else (krx_val + nxt_val)
 
+            # 정규장 거래량 vs 시간외 거래량/비중 정밀 산출
+            if is_baseline_window:
+                reg_vol = total_vol
+                after_vol = 0
+                after_nxt_vol = 0
+                nxt_ratio = 0.0
+                after_val = 0
+            elif existing_baseline and code in existing_baseline:
+                b_st = existing_baseline[code]
+                b_krx = b_st.get("krx_volume", 0)
+                b_nxt = b_st.get("nxt_volume", 0)
+                b_tot = b_st.get("total_volume", 0)
+                after_krx = max(0, krx_vol - b_krx)
+                after_nxt_vol = max(0, nxt_vol - b_nxt)
+                after_vol = after_krx + after_nxt_vol
+                reg_vol = b_tot
+                nxt_ratio = round((after_nxt_vol / after_vol * 100), 2) if after_vol > 0 else 0.0
+                after_val = after_vol * over_price
+            elif code in minute_map:
+                m_info = minute_map[code]
+                reg_vol = m_info["reg_volume"]
+                after_vol = m_info["after_volume"]
+                after_nxt_vol = m_info["after_nxt_volume"]
+                nxt_ratio = m_info["nxt_after_ratio"]
+                after_val = after_vol * over_price
+            else:
+                reg_vol = total_vol
+                after_vol = 0
+                after_nxt_vol = 0
+                nxt_ratio = 0.0
+                after_val = 0
+
             stocks_data[code] = {
                 "name": name,
                 "market": mkt,
@@ -240,6 +334,11 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
                 "close_price": close_price,
                 "over_price": over_price,
                 "over_change_rate": over_change_rate,
+                "reg_volume": reg_vol,
+                "after_volume": after_vol,
+                "after_nxt_volume": after_nxt_vol,
+                "after_value": after_val,
+                "nxt_after_ratio": nxt_ratio,
                 "krx_volume": krx_vol,
                 "krx_value": krx_val,
                 "nxt_volume": nxt_vol,
@@ -248,8 +347,10 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
                 "total_value": total_val
             }
 
+        session_name = "BASELINE_1530" if is_baseline_window else ("ENRICHED_FINAL" if existing_baseline else "RECONSTRUCTED_1530_AND_AFTERMARKET")
         snapshot_payload = {
             "date": target_date_str,
+            "session": session_name,
             "timestamp": now_kst.isoformat(),
             "total_stocks": len(stocks_data),
             "stocks": stocks_data
