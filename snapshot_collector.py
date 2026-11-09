@@ -1,10 +1,10 @@
 """
 ================================================================================
-🏛️ 15:30 정규장 마감 스냅샷 수집기 (Market Close Snapshot Collector)
-- 실행 시점: 월~금 매일 한국 시각 15:35 (UTC 06:35)
-- 기능: 시가총액 상위 종목(600개)의 정규장 마감 거래량/거래대금/종가를 즉시 수집하여 스냅샷 JSON 파일로 저장
+🏛️ 15:30 정규장 마감 및 애프터마켓 스냅샷 수집기 (Snapshot Collector)
+- 실행 시점: 월~금 매일 한국 시각 15:35 (UTC 06:35) 및 장 마감 후
+- 기능: 시가총액 상위 종목(600개)의 정규장 공식 종가, 시간외 실제 체결가(호가),
+        시간외 거래량/거래대금을 네이버 실시간 배치 API를 통해 10초 이내 초고속 정밀 수집 및 저장
 - 저장 경로: snapshots/snapshot_YYYYMMDD_1530.json 및 snapshots/latest_snapshot.json
-- 개선: 중복 실행 방지(Lock), 이미 존재하는 유효 파일에 대한 Early Return(캐시 보호)
 ================================================================================
 """
 
@@ -23,10 +23,38 @@ from config import KST, KRX_HOLIDAYS, MAX_HISTORICAL_DAYS
 
 _collector_lock = threading.Lock()
 
+# -----------------------------------------------------------------------------
+# 1. KRX 공식 호가 단위 (Tick Size) 유효성 검증기
+# -----------------------------------------------------------------------------
+def get_krx_tick_size(price: int) -> int:
+    """KRX/KOSDAQ 공식 호가 단위(Tick Size)를 반환합니다."""
+    if price < 2000:
+        return 1
+    elif price < 5000:
+        return 5
+    elif price < 20000:
+        return 10
+    elif price < 50000:
+        return 50
+    elif price < 200000:
+        return 100
+    elif price < 500000:
+        return 500
+    else:
+        return 1000
+
+def align_to_krx_tick(price: float) -> int:
+    """주어진 가격을 가장 가까운 KRX 정규 호가 단위로 정렬합니다."""
+    if not price or price <= 0:
+        return 0
+    p = round(price)
+    tick = get_krx_tick_size(p)
+    return int(round(p / tick) * tick)
+
 def is_krx_trading_day(d) -> bool:
     """주어진 날짜가 실제 KRX 개장 거래일인지 판정합니다."""
     d_str = d.strftime("%Y%m%d")
-    if d.weekday() >= 5:  # 주말 (토요일: 5, 일요일: 6)
+    if d.weekday() >= 5:  # 주말
         return False
     if d_str in KRX_HOLIDAYS:  # 법정 공휴일
         return False
@@ -86,7 +114,7 @@ def fetch_batch_quotes(code_chunk: list) -> list:
 
 def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
     """
-    15:30 정규장 마감 스냅샷을 수집하고 snapshots/ 폴더에 JSON 파일로 저장합니다.
+    15:30 정규장 마감 및 애프터마켓 실제 체결가/수급 스냅샷을 수집하고 snapshots/ 폴더에 JSON 파일로 저장합니다.
     """
     now_kst = datetime.now(KST)
 
@@ -105,14 +133,17 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
     date_file = os.path.join(snapshots_dir, f"snapshot_{target_date_str}_1530.json")
     latest_file = os.path.join(snapshots_dir, "latest_snapshot.json")
 
-    # Early return: 이미 해당 날짜의 유효한 스냅샷이 존재하면 즉시 반환
+    # Early return: 이미 해당 날짜의 유효한 스냅샷이 존재하고, over_price 필드가 온전히 갖춰져 있으면 기존 파일 반환
     if not force and os.path.exists(date_file):
         try:
             with open(date_file, "r", encoding="utf-8") as f:
                 d = json.load(f)
-                if d and d.get("stocks") and len(d.get("stocks")) > 0:
-                    print(f"[*] Snapshot for {target_date_str} already exists ({len(d.get('stocks'))} stocks). Returning existing file.")
-                    return date_file
+                stocks = d.get("stocks", {})
+                if stocks and len(stocks) > 0:
+                    sample_stock = next(iter(stocks.values()))
+                    if "over_price" in sample_stock:
+                        print(f"[*] Snapshot for {target_date_str} already exists with over_price ({len(stocks)} stocks). Returning existing file.")
+                        return date_file
         except Exception:
             pass
 
@@ -123,17 +154,7 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
             return None
 
     with _collector_lock:
-        # 락 획득 후 재검사 (Double-Checked Locking)
-        if not force and os.path.exists(date_file):
-            try:
-                with open(date_file, "r", encoding="utf-8") as f:
-                    d = json.load(f)
-                    if d and d.get("stocks") and len(d.get("stocks")) > 0:
-                        return date_file
-            except Exception:
-                pass
-
-        print(f"[*] Starting 15:30 Snapshot collection for date: {target_date_str} at {now_kst.strftime('%Y-%m-%d %H:%M:%S KST')}...")
+        print(f"[*] Starting Snapshot collection for date: {target_date_str} at {now_kst.strftime('%Y-%m-%d %H:%M:%S KST')}...")
         t0 = time.time()
 
         # 1. 대상 유니버스 수집 (코스피 300 + 코스닥 300 = 600개)
@@ -146,11 +167,10 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
         codes = [u["code"] for u in universe]
         code_map = {u["code"]: u for u in universe}
 
-        # 2. 배치 시세 수집
+        # 2. 네이버 배치 시세 초고속 병렬 수집
         chunk_size = 25
         chunks = [codes[i:i + chunk_size] for i in range(0, len(codes), chunk_size)]
         quotes = []
-
         with ThreadPoolExecutor(max_workers=8) as executor:
             for res in executor.map(fetch_batch_quotes, chunks):
                 quotes.extend(res)
@@ -175,10 +195,35 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
             krx_vol = int(item.get("accumulatedTradingVolumeRaw", 0) or 0)
             krx_val = int(item.get("accumulatedTradingValueRaw", 0) or 0)
 
-            # NXT 누적 거래량 & 거래대금
+            # NXT 시간외 누적 거래량 & 거래대금
             over_info = item.get("overMarketPriceInfo", {}) or {}
             nxt_vol = int(over_info.get("accumulatedTradingVolumeRaw", 0) or 0)
-            nxt_val = int(over_info.get("accumulatedTradingValueRaw", 0) or 0)
+            nxt_val_raw = over_info.get("accumulatedTradingValueRaw")
+            try:
+                nxt_val = int(nxt_val_raw or 0)
+            except (ValueError, TypeError):
+                nxt_val = 0
+
+            # 실제 시간외 체결가(호가) 결정
+            over_price_raw = over_info.get("overPrice")
+            try:
+                over_price = int(str(over_price_raw).replace(",", "")) if over_price_raw else 0
+            except (ValueError, TypeError):
+                over_price = 0
+
+            # 시간외 거래가 전혀 없는 종목은 정규장 종가로 동기화
+            if over_price == 0:
+                over_price = close_price
+
+            # 호가 단위 정렬 가드
+            if over_price > 0:
+                over_price = align_to_krx_tick(over_price)
+
+            # 시간외 등락률 계산
+            if close_price > 0 and over_price > 0:
+                over_change_rate = round(((over_price - close_price) / close_price) * 100, 2)
+            else:
+                over_change_rate = 0.0
 
             # 통합 거래량 & 거래대금
             integ_info = item.get("integratedPriceInfo", {}) or {}
@@ -193,6 +238,8 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
                 "market": mkt,
                 "market_cap": cap,
                 "close_price": close_price,
+                "over_price": over_price,
+                "over_change_rate": over_change_rate,
                 "krx_volume": krx_vol,
                 "krx_value": krx_val,
                 "nxt_volume": nxt_vol,
@@ -208,7 +255,7 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
             "stocks": stocks_data
         }
 
-        # 4. 파일 저장 (임시 파일 작성 후 원자적 교체)
+        # 4. 파일 저장 (원자적 교체)
         tmp_date_file = date_file + ".tmp"
         with open(tmp_date_file, "w", encoding="utf-8") as f:
             json.dump(snapshot_payload, f, ensure_ascii=False, indent=2)
@@ -219,7 +266,6 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
                 pass
         os.replace(tmp_date_file, date_file)
 
-        # latest_snapshot.json도 동기화
         tmp_latest_file = latest_file + ".tmp"
         with open(tmp_latest_file, "w", encoding="utf-8") as f:
             json.dump(snapshot_payload, f, ensure_ascii=False, indent=2)
@@ -236,9 +282,7 @@ def collect_snapshot(target_date_str: str = None, force: bool = False) -> str:
         print(f"  - {latest_file}")
         print(f"  - Total stocks: {len(stocks_data)}, Time elapsed: {elapsed:.2f}s")
 
-        # 최근 5영업일 초과 오래된 스냅샷 파일 자동 정리 (최근 5영업일치만 유지)
         cleanup_old_snapshots(keep_count=MAX_HISTORICAL_DAYS)
-
         return date_file
 
 def cleanup_old_snapshots(keep_count: int = MAX_HISTORICAL_DAYS):
@@ -254,9 +298,7 @@ def cleanup_old_snapshots(keep_count: int = MAX_HISTORICAL_DAYS):
         if m:
             files.append((m.group(1), os.path.join(snapshots_dir, fname), fname))
 
-    # 날짜 내림차순 정렬 (최신순)
     files.sort(key=lambda x: x[0], reverse=True)
-
     if len(files) > keep_count:
         for d_str, fpath, fname in files[keep_count:]:
             try:
@@ -266,15 +308,11 @@ def cleanup_old_snapshots(keep_count: int = MAX_HISTORICAL_DAYS):
                 print(f"[Warning] Failed to remove {fname}: {e}")
 
 if __name__ == "__main__":
-    # CLI 파라미터 처리
     target_date = None
     force_run = False
-
     for arg in sys.argv[1:]:
         if arg.startswith("--date="):
             target_date = arg.split("=")[1].replace("-", "")
         elif arg == "--force":
             force_run = True
-
-    # --force 플래그가 명시된 경우에만 force_run=True 적용 (기본값: False로서 주말/공휴일 검사 철저 수행)
     collect_snapshot(target_date_str=target_date, force=force_run)
