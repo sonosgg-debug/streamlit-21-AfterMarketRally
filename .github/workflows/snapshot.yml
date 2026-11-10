@@ -2,8 +2,10 @@ name: 15:30 Market Close Snapshot Collector
 
 on:
   schedule:
-    # 월~금 (Mon-Fri) 06:35 UTC = 15:35 KST (정규장 마감 5분 후, 애프터마켓 개장 5분 전 완벽 정합)
+    # 1. 06:35 UTC = 15:35 KST (정규장 마감 직후 15:30 기준점 수집)
     - cron: '35 6 * * 1-5'
+    # 2. 11:05 UTC = 20:05 KST (애프터마켓 최종 마감 후 전체 거래량/호가 확정 수집)
+    - cron: '5 11 * * 1-5'
   workflow_dispatch: # GitHub 웹 UI 'Actions' 탭에서 언제든지 수동 실행 가능
     inputs:
       force:
