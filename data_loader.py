@@ -183,14 +183,32 @@ def load_market_close_snapshot(target_date: str = None) -> dict:
 
         date_file = os.path.join(snapshots_dir, f"snapshot_{req_d}_1530.json")
 
+        def _is_healthy_snapshot(snap: dict) -> bool:
+            """스냅샷 데이터가 손상되지 않고 실제 거래 데이터를 온전히 담고 있는지 검증합니다."""
+            if not snap or not isinstance(snap, dict):
+                return False
+            stocks = snap.get("stocks", {})
+            if not stocks or len(stocks) < 100:
+                return False
+            sample = list(stocks.values())[:30]
+            if not all("over_price" in s for s in sample):
+                return False
+            # 마감된 세션(과거일 또는 당일 20:00 이후)인데 시간외 거래량이 전 종목 0이면 조기 수집된 손상 파일로 간주
+            is_completed = (req_d < today_str) or (req_d == today_str and now_kst.hour >= 20)
+            if is_completed and sum(s.get("after_volume", 0) for s in sample) == 0:
+                return False
+            return True
+
         # 1. 로컬 특정 일자 파일 우선 확인
         if os.path.exists(date_file):
             try:
                 with open(date_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     if data and str(data.get("date", "")).replace("-", "") == req_d:
-                        if "stocks" in data and data["stocks"]:
+                        if _is_healthy_snapshot(data):
                             return data
+                        else:
+                            print(f"[!] Local snapshot for {req_d} is premature or corrupted (after_volume=0). Proceeding to self-heal...")
             except Exception:
                 pass
 
@@ -201,12 +219,12 @@ def load_market_close_snapshot(target_date: str = None) -> dict:
                 with open(latest_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     if data and str(data.get("date", "")).replace("-", "") == req_d:
-                        if "stocks" in data and data["stocks"]:
+                        if _is_healthy_snapshot(data):
                             return data
             except Exception:
                 pass
 
-        # 3. 원격 GitHub Raw에서 해당 날짜 파일만 1:1 다운로드
+        # 3. 원격 GitHub Raw에서 해당 날짜 파일 1:1 다운로드 시도
         g_url = f"https://raw.githubusercontent.com/sonosgg-debug/streamlit-21-AfterMarketRally/main/snapshots/snapshot_{req_d}_1530.json"
         headers = {"User-Agent": "Mozilla/5.0"}
         try:
@@ -214,7 +232,7 @@ def load_market_close_snapshot(target_date: str = None) -> dict:
             if r.status_code == 200:
                 data = r.json()
                 if data and str(data.get("date", "")).replace("-", "") == req_d:
-                    if "stocks" in data and data["stocks"]:
+                    if _is_healthy_snapshot(data):
                         try:
                             with open(date_file, "w", encoding="utf-8") as f:
                                 json.dump(data, f, ensure_ascii=False, indent=2)
@@ -223,6 +241,19 @@ def load_market_close_snapshot(target_date: str = None) -> dict:
                         return data
         except Exception:
             pass
+
+        # 4. 자가 치유(Self-Healing): 유효한 스냅샷이 없거나 손상된 경우 즉시 온디맨드로 재구축 및 복원
+        try:
+            import snapshot_collector
+            print(f"[*] On-demand collecting and self-healing snapshot for {req_d}...")
+            healed_file = snapshot_collector.collect_snapshot(target_date_str=req_d, force=True)
+            if healed_file and os.path.exists(healed_file):
+                with open(healed_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if data and "stocks" in data and data["stocks"]:
+                        return data
+        except Exception as e:
+            print(f"[Warning] Failed to self-heal snapshot for {req_d}: {e}")
 
         return {}
 

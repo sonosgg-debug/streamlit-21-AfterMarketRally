@@ -318,6 +318,13 @@ with st.sidebar:
         btn_update = st.button("🔄 Update", use_container_width=True, help="캐시를 초기화하고 최신 데이터를 다시 수집합니다.")
         if btn_update:
             st.cache_data.clear()
+            if sel_target_date and sel_target_date != "LIVE":
+                try:
+                    import snapshot_collector
+                    d_clean = sel_target_date.replace("-", "")
+                    snapshot_collector.collect_snapshot(target_date_str=d_clean, force=True)
+                except Exception as e:
+                    print(f"[Warning] Failed to force refresh snapshot on update: {e}")
             st.rerun()
     with col_b2:
         btn_search = st.button("🔍 조회", type="primary", use_container_width=True, help="선택한 조건으로 화면을 갱신합니다.")
