@@ -483,7 +483,11 @@ def fetch_universe_by_scope(
 
     universe = []
     for m in target_markets:
-        pages_needed = (limit_per_market + 99) // 100
+        if "코스피 200" in scope:
+            cur_limit = 200 if m == "KOSPI" else 150
+        else:
+            cur_limit = limit_per_market
+        pages_needed = (cur_limit + 99) // 100
         for p in range(1, pages_needed + 1):
             url = f"https://m.stock.naver.com/api/stocks/marketValue/{m}?page={p}&pageSize=100"
             try:
@@ -491,6 +495,9 @@ def fetch_universe_by_scope(
                 if r.status_code == 200:
                     stocks = r.json().get("stocks", [])
                     for s in stocks:
+                        mkt_str = "KOSPI" if m == "KOSPI" else "KOSDAQ"
+                        if len([u for u in universe if u["Market"] == mkt_str]) >= cur_limit:
+                            break
                         code = s.get("itemCode")
                         name = s.get("stockName")
                         m_val_raw = s.get("marketValueRaw", 0)
@@ -502,7 +509,7 @@ def fetch_universe_by_scope(
                         universe.append({
                             "Code": str(code).zfill(6),
                             "Name": name,
-                            "Market": "KOSPI" if m == "KOSPI" else "KOSDAQ",
+                            "Market": mkt_str,
                             "MarketCap": marcap
                         })
                 if len(stocks) < 100:
